@@ -1,29 +1,34 @@
 from google import genai
-from config import Config
+from google.genai import types
+# FIXED IMPORTS: pointing to src.config and src.prompts
+from src.config import Config
+from src.prompts import SYSTEM_INSTRUCTION
 import time
 
 class Brain:
     def __init__(self):
         self.client = genai.Client(api_key=Config.get_api_key())
-        # CHANGED: Using the generic alias. This is the safest bet for API stability.
         self.model_id = "gemini-flash-latest"
 
     def think(self, user_input):
         try:
-            # We add a small safety buffer to prevent rapid-fire rate limits during testing
-            time.sleep(1) 
-            
+            time.sleep(1)
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=user_input
+                contents=user_input,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    temperature=0.0,
+                )
             )
             return response.text
         except Exception as e:
-            return f"ERROR_NEURAL_LINK: {e}"
+            return f'{{"thought": "Connection failure.", "action": "error", "params": {{"details": "{str(e)}"}} }}'
 
+# NOTE: Because we changed imports, running this file directly now requires:
+# python -m src.brain (from the root folder)
 if __name__ == "__main__":
-    print(f"Initializing Neural Link (Model: gemini-flash-latest)...")
+    print("Initializing System Zero (Mode: JSON Strict)...")
     core = Brain()
-    print("Sending ping...")
-    reply = core.think("You are SystemZero. Confirm operational status.")
-    print(f"Response Received: {reply}")
+    print("\n[TEST] Command: 'Check files.'")
+    print(core.think("Check files."))

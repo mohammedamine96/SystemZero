@@ -4,24 +4,17 @@
 **Local Action Agent Framework** (Python/Gemini)
 
 ## Status
-**Phase 3 Complete** (Cognition & Parsing Established).
-Currently halted before **Phase 4** (System Prompt & JSON Enforcement).
+**v0.1 - PROTOTYPE ACTIVE**
+- [x] Brain: Gemini Flash connected via google-genai.
+- [x] Protocol: JSON Strict Mode enforced.
+- [x] Security: Human-in-the-loop execution gate.
+- [x] Tools: Basic File System Access (List, Read).
 
-## Architecture
-* **Core:** Python 3.x
-* **Brain:** Google Gemini (Flash-Latest via google-genai SDK)
-* **Parser:** Strict JSON extraction with Markdown stripping.
+## Usage
+1. Activate venv: \.\venv\Scripts\activate\
+2. Run: \python main.py\
+3. Commands:
+   - 'List files in src'
+   - 'Read the README.md file'
+   - 'Get system info'
 
-## Setup
-1. Clone repository.
-2. Create .env with GEMINI_API_KEY.
-3. pip install -r requirements.txt
-4. Run python src/brain.py to test connectivity.
-
-## Roadmap
-- [x] Environment Initialization
-- [x] API Connection (Brain Module)
-- [x] Output Parsing (Parser Module)
-- [ ] System Prompt Engineering (Next Session)
-- [ ] Local File System Interface
-- [ ] Command Execution Loop"
