@@ -24,6 +24,19 @@ class Dispatcher:
                     return {"error": "Missing 'path' parameter for read_file."}
                 return Toolbox.read_file(target_path)
             
+            elif action == "write_file":
+                filename = params.get("filename")
+                content = params.get("content")
+                if not filename or content is None:
+                    return {"error": "Missing 'filename' or 'content' for write_file."}
+                return Toolbox.write_file(filename, content)
+            
+            elif action == "run_python_script":
+                filename = params.get("filename")
+                if not filename:
+                    return {"error": "Missing 'filename' for run_python_script."}
+                return Toolbox.run_python_script(filename)
+            
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
 

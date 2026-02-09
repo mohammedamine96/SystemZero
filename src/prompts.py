@@ -34,6 +34,14 @@ AVAILABLE TOOLS:
    - Description: Reads the content of a file.
    - Params: "path" (string)
 
+4. write_file
+   - Description: Writes content to a new file in the workspace.
+   - Params: "filename" (string, NO paths allowed), "content" (string)
+
+5. run_python_script
+   - Description: Executes a Python script located in the workspace.
+   - Params: "filename" (string)
+
 ERROR HANDLING:
 If the user request is unsafe, ambiguous, or impossible, set "action" to "error" and explain why in "thought".
 """
