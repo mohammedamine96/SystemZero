@@ -1,5 +1,6 @@
 import sys
 import json
+import re
 from src.brain import Brain
 from src.parser import Parser
 from src.dispatcher import Dispatcher
@@ -8,7 +9,7 @@ class SystemZero:
     def __init__(self):
         print(">> System Zero: Initializing modules...")
         self.brain = Brain()
-        print(">> System Zero: Online. Waiting for command.")
+        print(">> System Zero: Online (Vision Enabled). Waiting for command.")
 
     def run(self):
         while True:
@@ -21,11 +22,20 @@ class SystemZero:
                     print(">> System Zero: Shutting down.")
                     break
 
-                # 2. Cognition (The Brain)
+                # 2. Vision Check (Parsing for @filename)
+                image_attachment = None
+                # Regex to find @filename.ext
+                match = re.search(r"@([\w\-\.]+)", user_input)
+                if match:
+                    image_attachment = match.group(1)
+                    # Clean the prompt so the LLM doesn't get confused by the tag
+                    user_input = user_input.replace(f"@{image_attachment}", "").strip()
+
+                # 3. Cognition (The Brain)
                 print(">> Thinking...", end="\r")
-                raw_response = self.brain.think(user_input)
+                raw_response = self.brain.think(user_input, image_path=image_attachment)
                 
-                # 3. Parsing (The Filter)
+                # 4. Parsing (The Filter)
                 command = Parser.extract_command(raw_response)
                 
                 # Check for parsing errors
@@ -33,8 +43,7 @@ class SystemZero:
                     print(f"\n[ERROR] Parser rejected response: {command['error']}")
                     continue
 
-                # 4. Verification (Human-in-the-Loop)
-                # CRITICAL SECURITY STEP: We show the user what we are about to do.
+                # 5. Verification (Human-in-the-Loop)
                 print(f"\n[PLAN] Action: {command.get('action')}")
                 print(f"[PLAN] Reason: {command.get('thought')}")
                 
@@ -43,10 +52,10 @@ class SystemZero:
                     print(">> Action Aborted by User.")
                     continue
 
-                # 5. Execution (The Body)
+                # 6. Execution (The Body)
                 result = Dispatcher.execute(command)
                 
-                # 6. Output
+                # 7. Output
                 print(f"\n[RESULT]:\n{json.dumps(result, indent=2)}")
 
             except KeyboardInterrupt:
