@@ -177,6 +177,29 @@ class Toolbox:
 
         except Exception as e:
             return {"error": f"Fetch Failure: {e}"}
+    
+    @staticmethod
+    def archive_memory(key, value):
+        """
+        Stores a persistent key-value pair in memory.json.
+        Useful for remembering user preferences or project status.
+        """
+        import json
+        memory_file = "workspace/memory.json"
+        try:
+            data = {}
+            if os.path.exists(memory_file):
+                with open(memory_file, 'r') as f:
+                    data = json.load(f)
+            
+            data[key] = value
+            
+            with open(memory_file, 'w') as f:
+                json.dump(data, f, indent=2)
+                
+            return {"status": "success", "message": f"Memorized {key}"}
+        except Exception as e:
+            return {"error": f"Archive Failure: {e}"}
             
 # Self-Diagnostic
 if __name__ == "__main__":

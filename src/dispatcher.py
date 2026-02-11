@@ -43,6 +43,13 @@ class Dispatcher:
                     return {"error": "Missing 'url' parameter for fetch_url."}
                 return Toolbox.fetch_url(url)
             
+            elif action == "archive_memory":
+                key = params.get("key")
+                value = params.get("value")
+                if not key or value is None:
+                    return {"error": "Missing 'key' or 'value' for archive_memory."}
+                return Toolbox.archive_memory(key, value)
+            
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
 
