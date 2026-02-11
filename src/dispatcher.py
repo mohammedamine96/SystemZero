@@ -37,6 +37,12 @@ class Dispatcher:
                     return {"error": "Missing 'filename' for run_python_script."}
                 return Toolbox.run_python_script(filename)
             
+            elif action == "fetch_url":
+                url = params.get("url")
+                if not url:
+                    return {"error": "Missing 'url' parameter for fetch_url."}
+                return Toolbox.fetch_url(url)
+            
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
 

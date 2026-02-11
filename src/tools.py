@@ -2,6 +2,8 @@ import os
 import platform
 import sys          
 import subprocess
+import requests
+from bs4 import BeautifulSoup
 
 class Toolbox:
     # hada kijbad l info dyal pc
@@ -133,6 +135,48 @@ class Toolbox:
             return {"error": "Script execution timed out (limit: 5s)."}
         except Exception as e:
             return {"error": f"Execution Failure: {e}"}
+        
+    @staticmethod
+    def fetch_url(url):
+        """
+        Fetches text content from a URL.
+        SECURITY: Read-only (GET request).
+        """
+        try:
+            # 1. Validation
+            if not url.startswith("http"):
+                return {"error": "Invalid URL. Must start with http:// or https://"}
+
+            # 2. Request (with timeout to prevent hanging)
+            headers = {'User-Agent': 'SystemZero/1.0'}
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                return {"error": f"HTTP Error: {response.status_code}"}
+
+            # 3. Parse & Clean
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+                
+            text = soup.get_text()
+            
+            # Clean up whitespace
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            clean_text = '\n'.join(chunk for chunk in chunks if chunk)
+            
+            # Limit length to prevent context overflow (approx 4000 chars)
+            return {
+                "url": url,
+                "status": "success",
+                "content": clean_text[:4000] + "... (truncated)" if len(clean_text) > 4000 else clean_text
+            }
+
+        except Exception as e:
+            return {"error": f"Fetch Failure: {e}"}
             
 # Self-Diagnostic
 if __name__ == "__main__":

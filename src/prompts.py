@@ -41,7 +41,11 @@ AVAILABLE TOOLS:
 5. run_python_script
    - Description: Executes a Python script located in the workspace.
    - Params: "filename" (string)
-
+   
+6. fetch_url
+   - Description: Fetches and extracts text content from a website.
+   - Params: "url" (string)
+   
 ERROR HANDLING:
 If the user request is unsafe, ambiguous, or impossible, set "action" to "error" and explain why in "thought".
 """

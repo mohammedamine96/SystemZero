@@ -1,25 +1,35 @@
 # SystemZero
 
 ## Designation
-**Multimodal Local Action Agent** (v1.1)
+**Autonomous Multimodal Agent** (v1.2)
 
 ## Overview
-System Zero is a context-aware, multimodal agent that interfaces with the local OS. It can read/write files, execute code, and **analyze images**.
-
-## Architecture
-* **Brain:** \src/brain.py\ - Gemini Flash with Vision support.
-* **Tools:** \src/tools.py\ - File System & Code Execution Sandbox.
-* **Interface:** \main.py\ - Supports \@filename\ syntax for image injection.
+System Zero is a local, context-aware AI agent capable of interacting with the OS, the visual world, and the internet. It operates under a strict human-in-the-loop security protocol.
 
 ## Capabilities
-1.  **Code Execution:** Write and run Python scripts.
-2.  **Vision:** Analyze images in the workspace using \@filename.png\.
-3.  **Memory:** Remembers previous actions and context.
+1.  **Core:** Read/Write files, List directories, System Info.
+2.  **Execution:** Write and run Python scripts in a sandbox.
+3.  **Vision:** Analyze images via \@filename\ syntax.
+4.  **Network:** Fetch and scrape text from websites.
+5.  **Memory:** Retains context across multiple turns.
+
+## Architecture
+* **Brain:** Gemini Flash (Multimodal).
+* **Tools:**
+    * \etch_url\ (Web Scraper)
+    * \
+un_python_script\ (Code Executor)
+    * \write_file\ (File System)
+* **Security:**
+    * \workspace/\ Sandbox enforcement.
+    * JSON-strict parsing.
+    * User confirmation gate.
 
 ## Usage
 1.  \pip install -r requirements.txt\
-2.  Setup \.env\ with \GEMINI_API_KEY\.
-3.  **Vision Example:**
-    * Drop \error_log.png\ into \workspace/\.
-    * Run: "\Analyze the error in @error_log.png and write a fix to fix.py\"
+2.  \python main.py\
+3.  **Commands:**
+    * "\Check the news on bbc.com\"
+    * "\Look at @chart.png and summarize it\"
+    * "\Write a script to calculate Pi\"
 
