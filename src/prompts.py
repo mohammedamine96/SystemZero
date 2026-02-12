@@ -17,6 +17,7 @@ AVAILABLE TOOLS:
 5. run_python_script - Params: "filename"
 6. fetch_url - Params: "url"
 7. archive_memory - Params: "key", "value"
+8. search_web - Params: "query" (Use this to find URLs before fetching them)
 
 PERSISTENT MEMORY PROTOCOL:
 - Long-term data is stored in 'workspace/memory.json'.

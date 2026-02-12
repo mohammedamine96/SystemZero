@@ -50,6 +50,12 @@ class Dispatcher:
                     return {"error": "Missing 'key' or 'value' for archive_memory."}
                 return Toolbox.archive_memory(key, value)
             
+            elif action == "search_web":
+                query = params.get("query")
+                if not query:
+                    return {"error": "Missing 'query' parameter for search_web."}
+                return Toolbox.search_web(query)
+            
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
 

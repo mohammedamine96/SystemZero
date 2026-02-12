@@ -52,4 +52,6 @@ class Brain:
             return response.text
             
         except Exception as e:
+            # ERROR VISIBILITY: Print the actual error to the console
+            print(f"\n[SYSTEM ERROR]: {str(e)}") 
             return f'{{"thought": "Connection failure.", "action": "error", "params": {{"details": "{str(e)}"}} }}'

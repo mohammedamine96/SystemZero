@@ -48,19 +48,25 @@ class Toolbox:
         """
         Reads a text file.
         SECURITY: 
-        1. Checks if file exists.
-        2. Enforces a strict size limit (1MB) to prevent memory crashes.
+        1. Enforces 'workspace/' directory lock (Sandbox).
+        2. Enforces size limit.
         """
         try:
-            if not os.path.exists(path):
-                return {"error": "File not found."}
+            # SANITIZATION: Force workspace path if not absolute
+            if not path.startswith("workspace"):
+                target_path = os.path.join("workspace", path)
+            else:
+                target_path = path
+
+            if not os.path.exists(target_path):
+                return {"error": f"File not found in workspace: {target_path}"}
             
             # Check size (1MB limit)
-            file_size = os.path.getsize(path)
+            file_size = os.path.getsize(target_path)
             if file_size > 1024 * 1024:
                 return {"error": f"File too large ({file_size} bytes). Limit is 1MB."}
 
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(target_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             return {"content": content[:2000] + "... (truncated)" if len(content) > 2000 else content}
@@ -200,6 +206,46 @@ class Toolbox:
             return {"status": "success", "message": f"Memorized {key}"}
         except Exception as e:
             return {"error": f"Archive Failure: {e}"}
+    
+    @staticmethod
+    def search_web(query):
+        try:
+            url = "https://html.duckduckgo.com/html/"
+            # IMPROVED HEADER: Looks more like a real chrome browser
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://html.duckduckgo.com/'
+            }
+            payload = {'q': query}
+
+            response = requests.post(url, data=payload, headers=headers, timeout=10)
+            
+            # Debugging: Print status if it fails
+            if response.status_code != 200:
+                # If 202 happens, it's often a temporary block. 
+                # We return a specific error so the brain knows to wait or try fetch_url.
+                return {"error": f"Search Blocked (Status {response.status_code}). Try fetch_url directly if known."}
+
+            soup = BeautifulSoup(response.text, 'html.parser')
+            results = []
+            
+            for result in soup.find_all('div', class_='result', limit=5):
+                title_tag = result.find('a', class_='result__a')
+                if title_tag:
+                    results.append({
+                        "title": title_tag.get_text(strip=True),
+                        "link": title_tag['href']
+                    })
+
+            if not results:
+                return {"status": "success", "results": [], "message": "No results found."}
+
+            return {"status": "success", "results": results}
+
+        except Exception as e:
+            return {"error": f"Search Failure: {e}"}
             
 # Self-Diagnostic
 if __name__ == "__main__":
