@@ -56,6 +56,11 @@ class Dispatcher:
                     return {"error": "Missing 'query' parameter for search_web."}
                 return Toolbox.search_web(query)
             
+            elif action == "task_complete":
+                summary = params.get("summary", "Task Completed.")
+                print(f"\n>> [MISSION ACCOMPLISHED]: {summary}")
+                return {"status": "complete", "message": summary}
+            
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
 
