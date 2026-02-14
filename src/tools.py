@@ -199,3 +199,79 @@ class Toolbox:
             return {"status": "success", "message": f"Memorized {key}"}
         except Exception as e:
             return {"error": f"Archive Failure: {e}"}
+        
+    @staticmethod
+    def mouse_move(x, y):
+        """
+        Moves the cursor to specific coordinates.
+        params: x (int), y (int)
+        """
+        try:
+            import pyautogui
+            # Safety: Fail-safe triggers if mouse is slammed to a corner
+            pyautogui.FAILSAFE = True 
+            pyautogui.moveTo(x, y, duration=0.5) # duration prevents instant teleportation
+            return {"status": "success", "action": f"Moved to {x}, {y}"}
+        except Exception as e:
+            return {"error": f"Mouse Error: {e}"}
+
+    @staticmethod
+    def mouse_click(button="left"):
+        """
+        Clicks the mouse.
+        params: button ("left", "right", "double")
+        """
+        try:
+            import pyautogui
+            if button == "double":
+                pyautogui.doubleClick()
+            else:
+                pyautogui.click(button=button)
+            return {"status": "success", "action": f"Clicked {button}"}
+        except Exception as e:
+            return {"error": f"Click Error: {e}"}
+
+    @staticmethod
+    def type_text(text):
+        """
+        Types text on the keyboard.
+        params: text (str)
+        """
+        try:
+            import pyautogui
+            pyautogui.write(text, interval=0.05) # interval makes it look natural
+            return {"status": "success", "action": f"Typed: {text}"}
+        except Exception as e:
+            return {"error": f"Typing Error: {e}"}
+
+    @staticmethod
+    def press_key(key):
+        """
+        Presses a specific key (e.g., 'enter', 'win', 'tab').
+        params: key (str)
+        """
+        try:
+            import pyautogui
+            pyautogui.press(key)
+            return {"status": "success", "action": f"Pressed {key}"}
+        except Exception as e:
+            return {"error": f"Key Error: {e}"}
+        
+    @staticmethod
+    def open_browser(url):
+        """
+        Opens the default web browser to a specific URL.
+        SECURITY: This bypasses GUI typing errors (like autocomplete).
+        """
+        import webbrowser
+        try:
+            # We strip quotes just in case the LLM hallucinates them
+            clean_url = url.strip().strip('"').strip("'")
+            
+            if not clean_url.startswith("http"):
+                clean_url = "https://" + clean_url
+                
+            webbrowser.open(clean_url)
+            return {"status": "success", "action": f"Opened {clean_url}"}
+        except Exception as e:
+            return {"error": f"Browser Error: {e}"}
