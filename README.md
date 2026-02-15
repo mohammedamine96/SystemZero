@@ -1,20 +1,26 @@
-# 🤖 System Zero (v1.6)
+# 🤖 System Zero (v1.7)
 The Autonomous Multimodal Action Agent
 
-System Zero is a local-first, context-aware AI agent framework powered by Gemini 3 Flash. It bridges the gap between high-level natural language intent and low-level OS execution, featuring a secure "Human-in-the-Loop" architecture.
+System Zero is a local-first, context-aware AI agent framework powered by Gemini 3 Flash. It bridges the gap between high-level natural language intent and low-level OS execution.
 
 ## 🌟 Key Capabilities
 
-### 🖱️ Cybernetic Operator (GUI Control) **[NEW]**
-The agent now possesses "Hands." It can control the mouse and keyboard to interact with applications that lack APIs.
-* **Tools:** `mouse_move`, `mouse_click`, `type_text`, `press_key`.
-* **Safety:** Includes `pyautogui` fail-safes (slam mouse to corner to abort).
+### 🎙️ Voice Control (Auditory Input) **[NEW]**
+Talk to your agent naturally.
+* **Activation:** Type `voice` in the console.
+* **Deactivation:** Say "Switch to text".
+* **Engine:** Uses Google Speech Recognition for high-accuracy command parsing.
 
-### 🚀 Direct Browser Injection **[NEW]**
-Uses the `open_browser` tool to bypass the address bar and autocomplete traps, launching specific URLs directly via the OS shell.
+### 🖱️ Cybernetic Operator (GUI Control)
+The agent possesses "Hands." It can control the mouse and keyboard to interact with applications that lack APIs.
+* **Tools:** `mouse_move`, `mouse_click`, `type_text`, `press_key`.
+* **Safety:** Slam mouse to corner to abort.
+
+### 🚀 Direct Browser Injection
+Uses the `open_browser` tool to bypass autocomplete traps, launching specific URLs directly via the OS shell.
 
 ### 👁️ On-Demand Vision ("Look")
-Type `look` in the console to instantly capture your screen. The agent will analyze the visual context and suggest actions.
+Type `look` (or say "Look at this") to instantly capture your screen. The agent will analyze the visual context.
 
 ### 🌐 Autonomous Web Search
 The agent can actively research the web using a local, API-free scraper (DuckDuckGo HTML).
@@ -27,6 +33,7 @@ System Zero knows when it's done. Using the `task_complete` signal, it exits exe
 ### 1. Prerequisites
 * Python 3.10+
 * Google Gemini API Key
+* Microphone
 
 ### 2. Installation
 Initialize your environment and install dependencies:
@@ -34,11 +41,12 @@ Initialize your environment and install dependencies:
 ```powershell
 python -m venv venv
 .\venv\Scripts\activate
-pip install google-genai pillow requests beautifulsoup4 python-dotenv pyautogui
+pip install -r requirements.txt
+# Requirements: google-genai pillow requests beautifulsoup4 python-dotenv pyautogui SpeechRecognition pyaudio
 ```
 
 ### 3. Setup Credentials
-Create a `.env` file in the root directory and add your API key:
+Create a `.env` file in the root directory:
 
 ```env
 GEMINI_API_KEY=YOUR_KEY_HERE
@@ -51,22 +59,20 @@ python main.py
 ```
 
 ## 🛡️ Security & Safety
-* **Path Locking:** The agent is physically blocked from writing files outside of the `workspace/` folder.
-* **Fail-Safe:** If the mouse moves uncontrollably, slam it to any corner of the screen to trigger the pyautogui emergency stop.
-* **Approval Gate:** By default, no code is executed without a manual `y` confirmation.
+* **Path Locking:** The agent is blocked from writing files outside `workspace/`.
+* **Fail-Safe:** Mouse movement limits.
+* **Approval Gate:** Mandatory `y` confirmation (works in Voice Mode too).
 
 ## 📂 Project Structure
-* `main.py`: The recursive execution loop, vision interceptor, and human-gate interface.
-* `src/brain.py`: Stateful chat session and multimodal processing.
-* `src/dispatcher.py`: The neural routing layer (maps JSON -> Tool Functions).
-* `src/tools.py`: The "hands" (FS, Scraper, Vision, Mouse/Keyboard, Browser).
-* `workspace/`: The secure sandbox for all agent activities.
+* `main.py`: Hybrid Input Loop (Voice/Text) and Orchestrator.
+* `src/ears.py`: Audio driver and Speech-to-Text engine.
+* `src/brain.py`: LLM Logic.
+* `src/dispatcher.py`: Neural Routing.
+* `src/tools.py`: The Body (FS, Web, GUI, Vision).
+* `workspace/`: Secure Sandbox.
 
 ## 📜 Version History
-* **v1.0:** Base Execution Loop & Tooling.
-* **v1.1:** Vision Module (@tag support).
-* **v1.2:** Web Access & Scraper.
-* **v1.3:** Persistent Memory (`memory.json`).
-* **v1.4:** Recursive Autonomy & Trust Mode.
-* **v1.5:** Integrated look command and Task Termination.
-* **v1.6:** Operator Mode. Added GUI Automation (Mouse/Keyboard) and Direct Browser Control.
+* **v1.0 - v1.4:** Foundations (File I/O, Web Scraper, Memory).
+* **v1.5:** Vision & Termination Protocols.
+* **v1.6:** Operator Mode (Mouse/Keyboard).
+* **v1.7:** Auditory Interface. Added `src/ears.py` and Voice/Text switching.
