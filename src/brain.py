@@ -1,57 +1,80 @@
-from google import genai
-from google.genai import types
-from src.config import Config
-from src.prompts import SYSTEM_INSTRUCTION
-import time
-import PIL.Image
 import os
+import json
+from groq import Groq
+from dotenv import load_dotenv
+from src.prompts import SYSTEM_INSTRUCTION
+
+# FORCE LOAD .ENV
+load_dotenv()
 
 class Brain:
     def __init__(self):
-        self.client = genai.Client(api_key=Config.get_api_key())
-        self.model_id = "gemini-flash-latest"
-        
-        self.chat = self.client.chats.create(
-            model=self.model_id,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.0, 
-            )
-        )
-
-    def think(self, user_input, image_path=None):
-        """
-        Processes text and optional image input.
-        """
+        print(">> [BRAIN] Connecting to Groq Cloud (Llama 3.3)...")
         try:
-            time.sleep(1)
+            self.api_key = os.getenv("GROQ_API_KEY")
             
-            # 1. Prepare Content
-            content = [user_input]
-            
-            # 2. Attach Image (if present)
-            if image_path:
-                try:
-                    # Security: Ensure image is in workspace
-                    full_path = os.path.join("workspace", image_path)
-                    if not os.path.exists(full_path):
-                        return f'{{"thought": "Image not found.", "action": "error", "params": {{"details": "File {image_path} missing from workspace"}} }}'
-                    
-                    img = PIL.Image.open(full_path)
-                    content.append(img)
-                    print(f">> [System] Attached Vision Data: {image_path}")
-                except Exception as e:
-                    return f'{{"thought": "Image load error.", "action": "error", "params": {{"details": "{str(e)}"}} }}'
+            if not self.api_key:
+                # If .env fails, check if the user pasted it directly
+                # (Safety fallback)
+                print(">> [WARNING] GROQ_API_KEY not found in .env")
+                self.api_key = input("Enter Groq API Key: ").strip()
 
-            # 3. Send to Brain
-            response = self.chat.send_message(content)
+            self.client = Groq(api_key=self.api_key)
             
-            if not response.text:
-                return '{"thought": "The model returned an empty response.", "action": "error", "params": {"details": "Empty Response"}}'
-                
-            return response.text
+            # --- THE FIX IS HERE ---
+            # We switched from the dead 'llama3-70b-8192' to 'llama-3.3-70b-versatile'
+            self.model = "llama-3.3-70b-versatile" 
+            # -----------------------
+            
+            self.history = []
+            
+            # Connection Test
+            print(f">> [BRAIN] Pinging {self.model}...")
+            self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": "hi"}]
+            )
+            print(f">> [BRAIN] Online. Running on {self.model}.")
             
         except Exception as e:
-            # ERROR VISIBILITY: Print the actual error to the console
-            print(f"\n[SYSTEM ERROR]: {str(e)}") 
-            return f'{{"thought": "Connection failure.", "action": "error", "params": {{"details": "{str(e)}"}} }}'
+            print(f"\n[CRITICAL] Connection Failed: {e}")
+            raise e
+
+    def think(self, user_input, image_path=None):
+        # 1. Vision Warning
+        if image_path:
+             user_input += f" [System Note: User attached image '{image_path}' but you are text-only.]"
+
+        # 2. History Management
+        self.history.append({'role': 'user', 'content': user_input})
+        if len(self.history) > 10:
+            self.history = self.history[-10:]
+
+        # 3. Inference
+        try:
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {'role': 'system', 'content': SYSTEM_INSTRUCTION},
+                    *self.history
+                ],
+                temperature=0.1,
+                # We enable JSON mode for Llama 3.3 as it supports it perfectly
+                response_format={"type": "json_object"} 
+            )
+
+            response_text = completion.choices[0].message.content
+            
+            # 4. Save
+            self.history.append({'role': 'assistant', 'content': response_text})
+            return response_text
+
+        except Exception as e:
+            # --- DEBUG BLOCK ---
+            print(f"\n[BRAIN ERROR DETAILS]: {e}") 
+            # -------------------
+            return json.dumps({
+                "action": "error",
+                "thought": "Groq Brain Failure",
+                "params": {"details": str(e)}
+            })
