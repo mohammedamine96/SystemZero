@@ -19,6 +19,7 @@ AVAILABLE TOOLS:
 5. mouse_click - {"button": "left"}
 6. search_web - {"query": "..."}
 7. task_complete - {"summary": "Done"}
+8. click_text - {"text": "File", "button": "left"} (Use this to click buttons by name)
 
 RULES & PROTOCOLS:
 1. **OPENING APPS:** To open a desktop app (like WhatsApp, Notepad, Calculator):
@@ -26,6 +27,7 @@ RULES & PROTOCOLS:
    - Step 2: action: type_text, params: {"text": "App Name"}
    - Step 3: action: press_key, params: {"key": "enter"}
 2. **WEB SEARCH:** Use open_browser only for websites.
+3. **CLICKING UI:** prefer 'click_text' over 'mouse_click' whenever possible. Only use 'mouse_click' if you have specific coordinates from a previous step.
 
 EXAMPLE (Open Calculator):
 User: "Open calculator"

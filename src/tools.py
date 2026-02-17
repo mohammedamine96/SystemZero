@@ -4,8 +4,10 @@ import sys
 import subprocess
 import requests
 from bs4 import BeautifulSoup
-import pyautogui # Required for "look" command
-
+import pyautogui 
+from src.vision import Vision
+# Global instance so we don't reload the model every time
+GLOBAL_EYES = Vision()
 class Toolbox:
     @staticmethod
     def get_system_info():
@@ -275,3 +277,28 @@ class Toolbox:
             return {"status": "success", "action": f"Opened {clean_url}"}
         except Exception as e:
             return {"error": f"Browser Error: {e}"}
+    
+    @staticmethod
+    def click_text(text, button="left"):
+        """
+        Scans the screen for text and clicks it.
+        params: text (str), button ("left", "right")
+        """
+        try:
+            print(f">> [TOOL] Looking for '{text}'...")
+            coords = GLOBAL_EYES.find_element(text)
+
+            if not coords:
+                return {"status": "error", "message": f"Could not see text: '{text}' on screen."}
+
+            # Move and Click
+            import pyautogui
+            pyautogui.moveTo(coords['x'], coords['y'], duration=0.5)
+            pyautogui.click(button=button)
+
+            return {
+                "status": "success", 
+                "action": f"Clicked '{text}' at ({coords['x']}, {coords['y']})"
+            }
+        except Exception as e:
+            return {"error": f"Visual Click Failed: {e}"}
