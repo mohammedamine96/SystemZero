@@ -7,7 +7,7 @@ from src.parser import Parser
 from src.dispatcher import Dispatcher
 from src.tools import Toolbox
 from src.ears import Ears  # <--- NEW MODULE
-
+from src.mouth import Mouth
 class SystemZero:
     def __init__(self):
         print(">> System Zero: Initializing modules...")
@@ -15,6 +15,7 @@ class SystemZero:
         # Initialize Ears immediately
         self.ears = Ears()
         print(">> System Zero: Online (Autonomy Enabled).")
+        self.mouth = Mouth()
 
     def run(self):
         input_mode = "text" # Default to safety
@@ -90,7 +91,10 @@ class SystemZero:
             print(">> Thinking...", end="\r")
             raw_response = self.brain.think(current_input, image_path=image_attachment)
             command = Parser.extract_command(raw_response)
-            
+            # SYSTEM ZERO SPEAKS THE THOUGHT
+            thought_text = command.get('thought')
+            if thought_text:
+                self.mouth.speak(thought_text)
             # (Standard Error Loop Protection)
             if "error" in command and "Complete" not in command.get('thought', ''):
                 error_count += 1

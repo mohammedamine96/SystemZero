@@ -15,39 +15,41 @@ class Vision:
         print(">> [EYES] Vision Module Online.")
 
     def scan_screen(self):
-        """
-        Takes a snapshot and builds a text-coordinate map.
-        Returns the raw map for debugging.
-        """
         print(">> [EYES] Scanning current visual field...")
         
-        # 1. Capture Screen
+        # 1. Capture
         screenshot = pyautogui.screenshot()
-        
-        # 2. Convert to format OpenCV/EasyOCR understands
         image = np.array(screenshot)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+        # --- NEW OPTIMIZATION START ---
+        # Resize image to 50% scale to speed up processing
+        # This reduces pixel count by 75%, making OCR much faster
+        scale_ratio = 0.5 
+        width = int(image.shape[1] * scale_ratio)
+        height = int(image.shape[0] * scale_ratio)
+        small_image = cv2.resize(image, (width, height))
+        # --- NEW OPTIMIZATION END ---
         
-        # 3. Read Text (Async capable in v3.1, sync for now)
-        # detail=0 returns just text; detail=1 returns coords
-        results = self.reader.readtext(image)
+        # 2. Read Text (Pass the small image!)
+        results = self.reader.readtext(small_image)
         
-        # 4. Update Spatial Map
+        # 3. Update Spatial Map (We must scale coordinates BACK up)
         new_map = []
         for (bbox, text, prob) in results:
-            if prob > 0.5: # Filter low confidence garbage
-                # bbox is [[x1,y1], [x2,y1], [x2,y2], [x1,y2]]
-                # We need the center point for clicking
-                top_left = bbox[0]
-                bottom_right = bbox[2]
+            if prob > 0.4: 
+                # Map coordinates back to original screen size
+                # by dividing by scale_ratio
+                top_left = [int(bbox[0][0] / scale_ratio), int(bbox[0][1] / scale_ratio)]
+                bottom_right = [int(bbox[2][0] / scale_ratio), int(bbox[2][1] / scale_ratio)]
+                
                 center_x = int((top_left[0] + bottom_right[0]) / 2)
                 center_y = int((top_left[1] + bottom_right[1]) / 2)
                 
                 new_map.append({
                     "text": text.lower(),
                     "x": center_x,
-                    "y": center_y,
-                    "raw_text": text
+                    "y": center_y
                 })
         
         with self.lock:
