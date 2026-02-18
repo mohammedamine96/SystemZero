@@ -18,15 +18,26 @@ class Mouth:
         except Exception as e:
             print(f">> [MOUTH] Audio Init Failed: {e}")
 
-    def speak(self, text):
+    def speak(self, text, wait=True):
+        """
+        Speaks the text.
+        params:
+            text (str): The text to speak.
+            wait (bool): If True, the agent pauses execution until speech finishes.
+        """
         if not text:
             return
-        # Run in separate thread to avoid blocking the Brain
-        threading.Thread(target=self._run_tts_thread, args=(text,)).start()
+        
+        # If wait is True, we run directly (Blocking)
+        # If wait is False, we spin up a thread (Non-Blocking)
+        if wait:
+            self._run_tts(text)
+        else:
+            threading.Thread(target=self._run_tts, args=(text,)).start()
 
-    def _run_tts_thread(self, text):
+    def _run_tts(self, text):
         try:
-            # 1. CLEANUP: Unload and delete previous file to break locks
+            # 1. CLEANUP (Critical for file locks)
             if pygame.mixer.get_init():
                 pygame.mixer.music.unload()
             
@@ -34,34 +45,32 @@ class Mouth:
                 try:
                     os.remove(OUTPUT_FILE)
                 except PermissionError:
-                    print(">> [MOUTH] Warning: Audio file locked. Skipping this sentence.")
+                    print(">> [MOUTH] Warning: Audio locked. Skipping.")
                     return
 
-            # 2. GENERATE: Create new audio
+            # 2. GENERATE
+            # We create a new loop for this specific generation task
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             communicate = edge_tts.Communicate(text, VOICE)
             loop.run_until_complete(communicate.save(OUTPUT_FILE))
 
-            # 3. VERIFY & PLAY
+            # 3. PLAY & WAIT
             if os.path.exists(OUTPUT_FILE):
-                self._play_audio()
-            else:
-                print(">> [MOUTH ERROR] File failed to generate.")
-
+                self._play_audio_blocking()
+            
         except Exception as e:
-            print(f">> [MOUTH CRITICAL] {e}")
+            print(f">> [MOUTH ERROR] {e}")
 
-    def _play_audio(self):
+    def _play_audio_blocking(self):
         try:
             pygame.mixer.music.load(OUTPUT_FILE)
             pygame.mixer.music.play()
             
-            # Wait for audio to finish
+            # BLOCKING LOOP: Keeps the code stuck here until audio finishes
             while pygame.mixer.music.get_busy():
                 pygame.time.Clock().tick(10)
                 
-            # STRICT CLEANUP to release file lock
             pygame.mixer.music.unload()
             
         except Exception as e:

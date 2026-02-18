@@ -6,6 +6,8 @@ import requests
 from bs4 import BeautifulSoup
 import pyautogui 
 from src.vision import Vision
+from src.hands import Hands
+GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
 GLOBAL_EYES = Vision()
 class Toolbox:
@@ -302,3 +304,30 @@ class Toolbox:
             }
         except Exception as e:
             return {"error": f"Visual Click Failed: {e}"}
+    
+    @staticmethod
+    @staticmethod
+    def inspect_window():
+        """
+        Returns a list of buttons/inputs in the current window.
+        Use this BEFORE trying to click something to see what's available.
+        """
+        try:
+            # Get the raw text tree from the Hands module
+            ui_tree = GLOBAL_HANDS.inspect_ui()
+            
+            # WRAP IT IN A DICTIONARY
+            return {
+                "status": "success", 
+                "observation": ui_tree
+            }
+        except Exception as e:
+            return {"error": f"Inspection Failed: {e}"}
+
+    @staticmethod
+    def click_button_name(name):
+        """
+        Clicks a button by its exact name (e.g., 'File', 'Send', 'Search').
+        Does NOT use the mouse cursor.
+        """
+        return GLOBAL_HANDS.click_element(name)

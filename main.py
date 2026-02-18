@@ -94,7 +94,7 @@ class SystemZero:
             # SYSTEM ZERO SPEAKS THE THOUGHT
             thought_text = command.get('thought')
             if thought_text:
-                self.mouth.speak(thought_text)
+                self.mouth.speak(thought_text, wait=True)
             # (Standard Error Loop Protection)
             if "error" in command and "Complete" not in command.get('thought', ''):
                 error_count += 1
