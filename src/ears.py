@@ -4,50 +4,69 @@ import sys
 class Ears:
     def __init__(self):
         print(">> [EARS] Initializing Audio Drivers...")
-        try:
-            self.recognizer = sr.Recognizer()
-            self.mic = sr.Microphone()
-            
-            # Auto-calibration for room noise
-            with self.mic as source:
-                print(">> [EARS] Calibrating background noise... (Please remain silent)")
-                self.recognizer.adjust_for_ambient_noise(source, duration=1)
-                self.recognizer.dynamic_energy_threshold = True
-            print(">> [EARS] Online and Calibrated.")
-            
-        except OSError:
-            print("\n[CRITICAL ERROR] No Microphone detected.")
-            print("Ensure your microphone is plugged in and accessible.")
-            # We don't exit here so the system can still run in text mode
-            self.mic = None
+        self.recognizer = sr.Recognizer()
+        self.microphone = sr.Microphone()
+        
+        # Calibration for ambient noise
+        with self.microphone as source:
+            print(">> [EARS] Calibrating background noise... (Please remain silent)")
+            self.recognizer.adjust_for_ambient_noise(source, duration=2)
+        print(">> [EARS] Online and Calibrated.")
 
     def listen(self):
         """
-        Listens to the microphone and returns text.
-        Returns: str (command) or None (silence/error)
+        Active Listening: Listens for a full command (longer timeout).
         """
-        if not self.mic:
-            print(">> [EARS] Microphone not available.")
+        try:
+            with self.microphone as source:
+                print(">> [EARS] Listening for command...", end="\r")
+                # Listen for longer because this is the actual command
+                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
+            
+            print(">> [EARS] Processing audio...           ", end="\r")
+            text = self.recognizer.recognize_google(audio)
+            print(f">> [HEARD]: \"{text}\"")
+            return text
+            
+        except sr.WaitTimeoutError:
+            return None
+        except sr.UnknownValueError:
+            return None
+        except Exception as e:
+            print(f"\n[EARS ERROR] {e}")
             return None
 
-        with self.mic as source:
-            print("\n>> [LISTENING] Speak now...", end="\r")
+    def wait_for_wake_word(self, wake_word="start"):
+        """
+        Passive Listening: Loops infinitely until the wake word is heard.
+        """
+        print(f">> [PASSIVE] Waiting for activation phrase: '{wake_word}'...")
+        
+        while True:
             try:
-                # Listen with a timeout (don't hang forever)
-                # phrase_time_limit prevents it from listening to infinite silence
-                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=10)
+                with self.microphone as source:
+                    # Short listen to catch the phrase quickly
+                    audio = self.recognizer.listen(source, timeout=None, phrase_time_limit=3)
                 
-                print(">> [EARS] Processing...       ", end="\r")
-                # Use Google's free API (requires internet)
-                text = self.recognizer.recognize_google(audio)
-                print(f">> [HEARD]: \"{text}\"")
-                return text
-                
-            except sr.WaitTimeoutError:
-                return None # Silence
-            except sr.UnknownValueError:
-                print(">> [EARS] Audio unintelligible.")
-                return None
-            except sr.RequestError as e:
-                print(f">> [EARS] Connection Error: {e}")
-                return None
+                # We use show_all=False to get just the text
+                try:
+                    text = self.recognizer.recognize_google(audio).lower()
+                    
+                    # Check if the phrase was said
+                    if wake_word in text:
+                        print(f"\n>> [ACTIVATION] Detected '{text}'!")
+                        return True
+                    else:
+                        print(f">> [IGNORED] '{text}'", end="\r")
+                        
+                except sr.UnknownValueError:
+                    # Silence or noise, just ignore and loop back
+                    continue
+                    
+            except KeyboardInterrupt:
+                print("\n>> [EARS] Stopping...")
+                return False
+            except Exception as e:
+                # If internet cuts out or mic fails, print and retry
+                print(f"[PASSIVE ERROR] {e}", end="\r")
+                continue

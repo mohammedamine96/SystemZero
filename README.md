@@ -1,116 +1,89 @@
-# 🤖 System Zero (v2.0)
-**The Autonomous Desktop Operator**
+# ⚡ System Zero (v3.1)
 
-System Zero is a local-first, context-aware AI agent that controls your computer. It bridges the gap between natural language intent and low-level OS execution.
+**The Fully Autonomous, Voice-Activated Desktop Agent.**
 
-**Powered by:** Llama 3.3 (70B) via Groq Cloud.
-**Speed:** Near-Instant (~300 tokens/sec).
-**Cost:** Free.
+System Zero is a local-first AI agent that operates your Windows PC. It uses **Llama 3.3** for reasoning, **Computer Vision** to see the screen, and **Direct UI Injection** to control applications without hijacking your mouse.
 
----
+It features a "God Mode" (Trust Session) for continuous, hands-free voice command execution.
 
 ## 🌟 Key Capabilities
 
-### 🧠 Super-Intelligence (Groq Llama 3.3)
-The brain has been upgraded to **Llama 3.3 (70B)**. It understands complex logic, follows strict JSON schemas, and has no daily rate limits for standard use.
+### 🧠 The Brain (Groq Llama 3.3)
+* **Model:** Llama 3.3 70B (Versatile).
+* **Speed:** ~300 tokens/sec.
+* **Logic:** Follows strict JSON schemas for deterministic control.
 
-### 🖥️ Desktop App Control
-System Zero can open and control Windows applications (WhatsApp, Calculator, Notepad) by simulating human keyboard/mouse inputs.
-* **Protocol:** It presses the `Win` key, searches for the app, and launches it.
+### 👁️ The Eyes (Computer Vision)
+* **Engine:** EasyOCR + OpenCV (CUDA Accelerated).
+* **Function:** Scans the screen for text/buttons when "Ghost Mode" fails.
+* **Latency:** <2s with GPU acceleration.
 
-### 🎙️ Voice Command (Ears Module)
-Talk to your agent naturally.
-* **Activation:** Type `voice` in the console.
-* **Deactivation:** Say "Switch to text".
-* **Engine:** Google Speech Recognition.
+### ✋ The Hands (Ghost Mode)
+* **Technology:** `pywinauto` (Windows UI Automation).
+* **Capability:** Clicks buttons directly via API injection (0ms latency, invisible to the user).
+* **Fallback:** Uses standard `pyautogui` mouse movement if API injection fails.
 
-### ⌨️ Verbatim Typing
-The agent includes a "Verbatim Mode" to type exactly what you dictate, bypassing polite AI filters.
+### 👂 The Ears (Continuous Listening)
+* **Wake Word:** "Start" (Passive Listening Loop).
+* **Protocol:** Once activated, it enters a continuous conversation loop.
+* **Commands:** "Sleep", "Stop Listening", "Switch to Text".
 
-### 🖱️ Cybernetic Interaction
-* **Mouse:** Move to coordinates, Click (Left/Right/Double).
-* **Keyboard:** Type text, Press specific keys (Enter, Esc, Win, Tab).
-
-### 🌐 Autonomous Web Search
-The agent can actively research the web using a local, API-free scraper (DuckDuckGo HTML).
+### 🗣️ The Mouth (Neural Speech)
+* **Engine:** Edge-TTS (Microsoft Azure Neural Voices).
+* **Behavior:** Blocking/Synchronous speech (Agent waits for speech to finish before acting).
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Installation
 
-### 1. Prerequisites
-* **OS:** Windows 10/11
-* **Python:** 3.10 or higher (3.12 Recommended)
-* **Groq API Key:** [Get it for free here](https://console.groq.com/keys)
-
-### 2. Installation
-Initialize your environment and install dependencies:
-
-```powershell
-# 1. Create Environment
+### 1. Clone & Environment
+```bash
+git clone https://github.com/mohammedamine96/SystemZero.git
+cd SystemZero
 python -m venv venv
 .\venv\Scripts\activate
+```
 
-# 2. Install Dependencies
+### 2. Install Dependencies
+```bash
 pip install -r requirements.txt
 ```
-
-**Required Packages (requirements.txt):**
-```plaintext
-groq
-python-dotenv
-pyautogui
-SpeechRecognition
-pyaudio
-requests
-beautifulsoup4
-pillow
-```
+> **Note:** For GPU acceleration (recommended), install PyTorch with CUDA support manually.
 
 ### 3. Configuration
-Create a `.env` file in the root directory and add your API Key:
-
-```env
+Create a `.env` file in the root directory:
+```ini
 GROQ_API_KEY=gsk_your_key_here
 ```
 
-### 4. Running the Agent
-```powershell
-python main.py
-```
+## 🎮 Usage Guide
 
-## 🎮 How to Use
+### 🗣️ Voice Mode (The "Ironman" Experience)
+1. Run the agent: `python main.py`
+2. Type `voice` to enter Voice Mode.
+3. Say "Start" to wake the agent.
+4. **Issue Commands:** "Open Notepad", "Search YouTube for lo-fi music", etc.
 
-### 🗣️ Voice Mode
-1. Run the agent.
-2. Wait for `[EARS] Calibrating...`.
-3. Type `voice` and hit Enter.
-4. Speak your command (e.g., "Open Notepad and type Hello").
+> **God Mode:** In Voice Mode, the agent does not ask for confirmation. It executes commands instantly.
 
-### 🖱️ Desktop Control
-To open apps, be specific about using the Start Menu:
-* **User:** "Open WhatsApp using the start menu."
-* **System:** Presses `Win` -> Types `WhatsApp` -> Presses `Enter`.
+### 🖥️ Text Mode (Safe Mode)
+1. Run the agent: `python main.py`
+2. Type commands manually.
 
-### 🛡️ Safety & Control
-* **Stop Execution:** Press `Ctrl+C` in the terminal.
-* **Emergency Stop:** Slam your mouse cursor to any corner of the screen (PyAutoGUI Fail-Safe).
-* **Approval Gate:** By default, the agent asks for confirmation (`y`). Type `y!` to enable Trust Mode (Autonomous execution).
+> **Safety Gate:** The agent will ask for confirmation (y/n) before executing actions.
 
-## 📂 System Architecture
+## 📂 Architecture
 
 | Module | Function |
 | :--- | :--- |
-| `main.py` | **The Central Nervous System.** Handles the input loop (Voice/Text) and error recovery. |
-| `src/brain.py` | **Groq Integration.** Connects to Llama 3.3 to process intent into JSON. |
-| `src/ears.py` | **Auditory Cortex.** Handles microphone input and Speech-to-Text. |
-| `src/dispatcher.py` | **The Body.** Routes JSON commands to the correct tools. |
-| `src/tools.py` | **The Hands.** Contains `mouse_move`, `type_text`, `open_browser`, etc. |
-| `src/prompts.py` | **The Rules.** Defines the system personality and JSON schema. |
+| `main.py` | **Central Nervous System.** Handles the Input/Output loop and State Management. |
+| `src/brain.py` | **LLM Interface.** Converts natural language into JSON instructions. |
+| `src/ears.py` | Wake Word detection and Speech-to-Text. |
+| `src/mouth.py` | Text-to-Speech engine. |
+| `src/eyes.py` | OCR and Screen Analysis. |
+| `src/hands.py` | Windows UI Automation (Ghost Clicks). |
+| `src/tools.py` | The toolkit definition (File I/O, Browser, OS interaction). |
 
-## 📜 Version History
-* **v1.0:** Gemini API Base.
-* **v1.5:** Vision & Local Tools.
-* **v1.6:** Operator Mode (Mouse/Keyboard).
-* **v1.7:** Auditory Interface (Voice).
-* **v2.0:** Groq Migration. Replaced Gemini with Llama 3.3 for speed/autonomy. Added Desktop App Protocols.
+## ⚠️ Disclaimer
+**System Zero v3.1 (God Mode)** executes commands immediately.
+If you tell it to "Delete System32", it might actually try. **Use Voice Mode with caution.**

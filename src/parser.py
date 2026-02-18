@@ -36,23 +36,3 @@ class Parser:
         except Exception as e:
             return {"error": str(e)}
 
-# Self-Diagnostic
-if __name__ == "__main__":
-    print("Testing Parser...")
-    
-    # Test 1: Perfect JSON
-    raw_1 = '{"thought": "Testing system.", "action": "ping", "params": {}}'
-    print(f"Test 1 (Clean): {Parser.extract_command(raw_1)}")
-    
-    # Test 2: Markdown wrapped (Common LLM behavior)
-    raw_2 = """
-    Here is the command:
-    ```json
-    {
-      "thought": "I need to list files.",
-      "action": "ls",
-      "params": {"path": "."}
-    }
-    ```
-    """
-    print(f"Test 2 (Markdown): {Parser.extract_command(raw_2)}")
