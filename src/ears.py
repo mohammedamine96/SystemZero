@@ -36,7 +36,7 @@ class Ears:
             print(f"\n[EARS ERROR] {e}")
             return None
 
-    def wait_for_wake_word(self, wake_word="start"):
+    def wait_for_wake_word(self, wake_word="zero"):
         """
         Passive Listening: Loops infinitely until the wake word is heard.
         """

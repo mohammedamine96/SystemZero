@@ -37,9 +37,9 @@ class SystemZero:
                     # STATE 1: ASLEEP (Waiting for "Start")
                     if not active_session:
                         # Waits here for the keyword
-                        if self.ears.wait_for_wake_word("start"):
+                        if self.ears.wait_for_wake_word("zero"):
                             active_session = True
-                            self.mouth.speak("I am listening.", wait=True)
+                            self.mouth.speak("I am listening, master amine", wait=True)
                         else:
                             continue 
 
@@ -77,15 +77,6 @@ class SystemZero:
 
     def process_task(self, initial_input, input_mode="text"):
         current_input = initial_input
-        
-        # --- GOD MODE CONFIGURATION ---
-        # If in Voice Mode, we ENABLE TRUST automatically.
-        # No confirmations. No waiting. Pure execution.
-        if input_mode == "voice":
-            trust_session = True
-        else:
-            trust_session = False # Text mode still asks for safety
-            
         error_count = 0
         
         while True:
@@ -100,12 +91,34 @@ class SystemZero:
             raw_response = self.brain.think(current_input, image_path=image_attachment)
             command = Parser.extract_command(raw_response)
             
+            # --- 🚀 DEFAULT TO GOD MODE ---
+            # We trust the agent completely by default now, for both Text and Voice
+            trust_session = True
+            
+            # --- 🛡️ THE SECURITY FILTER 🛡️ ---
+            thought_text = command.get('thought', '')
+            action_name = command.get('action', '')
+            params_str = str(command.get('params', {}))
+            
+            # Define words that trigger the safety lockdown
+            dangerous_keywords = ["delete", "remove", "format", "erase", "uninstall", "rmdir", "drop"]
+            combined_context = (str(thought_text) + " " + action_name + " " + params_str).lower()
+            
+            is_dangerous = any(word in combined_context for word in dangerous_keywords)
+            
+            if is_dangerous:
+                # REVOKE TRUST! Force the user to confirm.
+                trust_session = False
+                print("\n>> [SECURITY ALERT] Destructive intent detected!")
+                self.mouth.speak("Warning. Destructive action detected. I need your explicit permission to proceed.", wait=True)
+            
             # SYSTEM ZERO SPEAKS THE PLAN
-            thought_text = command.get('thought')
             if thought_text:
                 print(f"[PLAN] Reason: {thought_text}")
-                # It speaks the plan, then immediately acts (because trust_session is True)
-                self.mouth.speak(thought_text, wait=True)
+                if not is_dangerous:
+                    self.mouth.speak(thought_text, wait=True)
+                else:
+                    self.mouth.speak(f"The plan is: {thought_text}", wait=True)
 
             # (Error Loop Protection)
             if "error" in command and "Complete" not in command.get('thought', ''):
@@ -123,16 +136,51 @@ class SystemZero:
 
             print(f"\n[PLAN] Action: {command.get('action')}")
             
-            # --- AUTHORIZATION GATE ---
-            # This entire block is SKIPPED if trust_session is True
+            # --- 🛑 AUTHORIZATION GATE (Triggers ONLY if trust_session is False) ---
             if not trust_session:
-                confirm = input(">> Execute? (y / y! / n / stop): ")
-                if confirm.lower() == 'y!':
-                    trust_session = True
-                elif confirm.lower() == 'stop' or confirm.lower() == 'n':
-                    break
+                if input_mode == "text":
+                    confirm = input(">> Execute? (y / n / stop): ")
+                    if confirm.lower() == 'y' or confirm.lower() == 'y!':
+                        trust_session = True
+                    elif confirm.lower() in ['stop', 'n']:
+                        print(">> [SYSTEM] Action aborted by Operator.")
+                        break
+                
+                elif input_mode == "voice":
+                    print(">> [WAITING FOR OVERRIDE] Say 'Yes', 'Go', or 'Stop'...")
+                    time.sleep(0.5) 
+                    
+                    attempts = 0
+                    authorized = False
+                    
+                    while attempts < 3:
+                        approval = self.ears.listen()
+                        
+                        if approval:
+                            print(f">> [HEARD]: '{approval}'")
+                            approval = approval.lower()
+                            
+                            if any(word in approval for word in ["yes", "yeah", "go", "proceed", "ok", "do it", "confirm"]):
+                                authorized = True
+                                trust_session = True
+                                self.mouth.speak("Override accepted. Executing.", wait=True)
+                                break
+                            elif any(word in approval for word in ["stop", "no", "wait", "cancel", "abort"]):
+                                self.mouth.speak("Action aborted.", wait=True)
+                                return 
+                            else:
+                                print(">> [SYSTEM] Invalid confirmation. Say 'Yes' or 'No'.")
+                                attempts += 1
+                        else:
+                            print(">> [SILENCE] I didn't hear you. Listening again...")
+                            attempts += 1
+                    
+                    if not authorized:
+                        print(">> [TIMEOUT] Authorization failed.")
+                        self.mouth.speak("Authorization timeout. Aborting.", wait=True)
+                        break
 
-            # (Trust Mode Execution)
+            # (Execution)
             if trust_session:
                 time.sleep(0.2) 
             
