@@ -115,12 +115,13 @@ class SystemZero:
             action_name = command.get('action', '')
             params_str = str(command.get('params', {}))
             
-            # Define words that trigger the safety lockdown
-            dangerous_keywords = ["delete", "remove", "format", "erase", "uninstall", "rmdir", "drop"]
             combined_context = (str(thought_text) + " " + action_name + " " + params_str).lower()
             
-            is_dangerous = any(word in combined_context for word in dangerous_keywords)
-            
+            # Use Regex \b to ensure we only match WHOLE words. 
+            # This prevents "information" from triggering "format".
+            dangerous_pattern = r"\b(delete|remove|format|erase|uninstall|rmdir|drop)\b"
+            is_dangerous = bool(re.search(dangerous_pattern, combined_context))
+
             if is_dangerous:
                 # REVOKE TRUST! Force the user to confirm.
                 trust_session = False
@@ -211,8 +212,11 @@ class SystemZero:
                 self.mouth.speak(summary, wait=True)
                 break
 
-            current_input = f"SYSTEM FEEDBACK: Last action resulted in: {json.dumps(result)}. Proceed."
-
+            # --- PERSISTENT MEMORY ---
+            # We must constantly remind the Brain of the ORIGINAL goal, 
+            # otherwise it forgets the specifics (like the exact time) after a few steps!
+            current_input = f"ORIGINAL GOAL: {initial_input}\nSYSTEM FEEDBACK: Last action resulted in: {json.dumps(result)}. What is the next step?"
+            
 # --- BOOT SEQUENCE ---
 if __name__ == "__main__":
     # 1. Create the communication queue
