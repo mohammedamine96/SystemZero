@@ -2,20 +2,32 @@ import sys
 import json
 import re
 import time
+import threading
+import queue
+
 from src.brain import Brain
 from src.parser import Parser
 from src.dispatcher import Dispatcher
 from src.tools import Toolbox
 from src.ears import Ears
 from src.mouth import Mouth
+from src.gui import SystemZeroGUI  # <--- NEW IMPORT
 
 class SystemZero:
-    def __init__(self):
+    def __init__(self, command_queue):
+        self.command_queue = command_queue # Connects to the GUI input
         print(">> System Zero: Initializing modules...")
         self.brain = Brain()
         self.ears = Ears()
-        print(">> System Zero: Online (Autonomy Enabled).")
         self.mouth = Mouth()
+        print(">> System Zero: Online (Autonomy Enabled).")
+
+    def wait_for_text_input(self, prompt=""):
+        """Replaces standard input(). Waits for the GUI queue."""
+        if prompt:
+            print(prompt, end="")
+        # This blocks the background thread until the user clicks "SEND" on the GUI
+        return self.command_queue.get()
 
     def run(self):
         input_mode = "text"
@@ -27,19 +39,20 @@ class SystemZero:
                 
                 # --- INPUT HANDLING ---
                 if input_mode == "text":
-                    user_input = input("\n[USER]: ")
+                    # Wait for text from the GUI instead of the terminal
+                    user_input = self.wait_for_text_input()
+                    
                     if user_input.lower().strip() == "voice":
                         input_mode = "voice"
-                        print(">> [SYSTEM] Switched to VOICE MODE.")
+                        print("\n>> [SYSTEM] Switched to VOICE MODE.")
                         continue
 
                 elif input_mode == "voice":
                     # STATE 1: ASLEEP (Waiting for "Start")
                     if not active_session:
-                        # Waits here for the keyword
-                        if self.ears.wait_for_wake_word("zero"):
+                        if self.ears.wait_for_wake_word("zero"): # Using 'zero' based on your latest log
                             active_session = True
-                            self.mouth.speak("I am listening, master amine", wait=True)
+                            self.mouth.speak("I am listening.", wait=True)
                         else:
                             continue 
 
@@ -67,17 +80,20 @@ class SystemZero:
                     continue
                 
                 if user_input.lower() in ["exit", "quit", "shutdown"]:
+                    print(">> [SYSTEM] Shutting down...")
                     break
 
                 # --- EXECUTION ---
                 self.process_task(user_input, input_mode)
 
-            except KeyboardInterrupt:
+            except Exception as e:
+                print(f"\n[CRITICAL ERROR] {e}")
                 break
 
     def process_task(self, initial_input, input_mode="text"):
         current_input = initial_input
         error_count = 0
+        is_first_thought = True  # <--- Tracks if this is the first action
         
         while True:
             # (Standard image logic)
@@ -87,12 +103,11 @@ class SystemZero:
                 image_attachment = match.group(1)
                 current_input = current_input.replace(f"@{image_attachment}", "").strip()
 
-            print(">> Thinking...", end="\r")
+            print(">> Thinking...")
             raw_response = self.brain.think(current_input, image_path=image_attachment)
             command = Parser.extract_command(raw_response)
             
-            # --- 🚀 DEFAULT TO GOD MODE ---
-            # We trust the agent completely by default now, for both Text and Voice
+            # Default Trust
             trust_session = True
             
             # --- 🛡️ THE SECURITY FILTER 🛡️ ---
@@ -112,13 +127,20 @@ class SystemZero:
                 print("\n>> [SECURITY ALERT] Destructive intent detected!")
                 self.mouth.speak("Warning. Destructive action detected. I need your explicit permission to proceed.", wait=True)
             
-            # SYSTEM ZERO SPEAKS THE PLAN
+            # --- 🗣️ THE MOUTH LOGIC (QUIET MODE) ---
             if thought_text:
                 print(f"[PLAN] Reason: {thought_text}")
-                if not is_dangerous:
-                    self.mouth.speak(thought_text, wait=True)
-                else:
+                
+                if is_dangerous:
+                    # Always speak the plan if it's dangerous so you know what you are approving
                     self.mouth.speak(f"The plan is: {thought_text}", wait=True)
+                elif is_first_thought:
+                    # Speak ONLY the first thought
+                    self.mouth.speak(thought_text, wait=True)
+                    is_first_thought = False  # Turn off the mouth for the next loops
+                else:
+                    # Stay silent for intermediate steps
+                    pass 
 
             # (Error Loop Protection)
             if "error" in command and "Complete" not in command.get('thought', ''):
@@ -130,16 +152,12 @@ class SystemZero:
             else:
                 error_count = 0 
 
-            if command.get("status") == "task_complete":
-                print(f"\n>> [MISSION ACCOMPLISHED]: {command.get('summary')}")
-                break
-
             print(f"\n[PLAN] Action: {command.get('action')}")
             
-            # --- 🛑 AUTHORIZATION GATE (Triggers ONLY if trust_session is False) ---
+            # --- 🛑 AUTHORIZATION GATE ---
             if not trust_session:
                 if input_mode == "text":
-                    confirm = input(">> Execute? (y / n / stop): ")
+                    confirm = self.wait_for_text_input(">> Execute? (y / n / stop): ")
                     if confirm.lower() == 'y' or confirm.lower() == 'y!':
                         trust_session = True
                     elif confirm.lower() in ['stop', 'n']:
@@ -155,11 +173,9 @@ class SystemZero:
                     
                     while attempts < 3:
                         approval = self.ears.listen()
-                        
                         if approval:
                             print(f">> [HEARD]: '{approval}'")
                             approval = approval.lower()
-                            
                             if any(word in approval for word in ["yes", "yeah", "go", "proceed", "ok", "do it", "confirm"]):
                                 authorized = True
                                 trust_session = True
@@ -187,11 +203,31 @@ class SystemZero:
             result = Dispatcher.execute(command)
             print(f"\n[RESULT]:\n{json.dumps(result, indent=2)}")
             
+            # --- 🏁 TASK COMPLETE LOGIC (FIXED) ---
             if result.get("status") == "task_complete":
+                # Extract the final message from the Dispatcher's output
+                summary = result.get("message", "Task completed.")
+                # The agent speaks its final summary here!
+                self.mouth.speak(summary, wait=True)
                 break
 
             current_input = f"SYSTEM FEEDBACK: Last action resulted in: {json.dumps(result)}. Proceed."
 
+# --- BOOT SEQUENCE ---
 if __name__ == "__main__":
-    agent = SystemZero()
-    agent.run()
+    # 1. Create the communication queue
+    cmd_queue = queue.Queue()
+    
+    # 2. Initialize the GUI (Main Thread)
+    app = SystemZeroGUI(cmd_queue)
+    
+    # 3. Initialize the Agent (Pass the queue to it)
+    agent = SystemZero(cmd_queue)
+    
+    # 4. Start the Agent in a Background Thread
+    # daemon=True means the thread will die when you close the GUI window
+    agent_thread = threading.Thread(target=agent.run, daemon=True)
+    agent_thread.start()
+    
+    # 5. Start the UI Loop (Blocks the main thread, keeping window open)
+    app.mainloop()
