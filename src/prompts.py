@@ -38,6 +38,12 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
+[MEMORY]
+- archive_memory: {"key": "wifi_password", "value": "Matrix2026"}
+    -> Saves a permanent fact about the user or system. Use this when the user asks you to remember something.
+- recall_memory: {"query": "wifi"}
+    -> Searches your long-term memory for a keyword. Use this FIRST if you are asked a question about the user's personal data, passwords, or preferences before saying you don't know.
+
 *** OPERATIONAL PROTOCOLS ***
 1. **APP LAUNCHING PROTOCOL** (If the user asks to open an App):
    - Step 1: `press_key` {"key": "win"}
@@ -57,4 +63,8 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 4. **SAFETY & ERROR RECOVERY:**
    - If an action returns "error", DO NOT repeat it immediately. Try a different tool.
    - If you are stuck, call `task_complete` with the failure reason.
+
+5. **MEMORY PROTOCOL:**
+   - If the user says "remember X", use `archive_memory`, then call `task_complete`.
+   - If the user asks for information you previously saved, use `recall_memory` to fetch it, then use `task_complete` to speak the answer.
 """

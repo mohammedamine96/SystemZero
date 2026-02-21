@@ -75,6 +75,18 @@ class Dispatcher:
                 summary = params.get("summary", "Task Completed.")
                 print(f"\n>> [MISSION ACCOMPLISHED]: {summary}")
                 return {"status": "task_complete", "message": summary}
+            
+            # --- MEMORY (HIPPOCAMPUS) ---
+            elif action == "archive_memory":
+                key = params.get("key")
+                value = params.get("value")
+                if not key or not value: return {"error": "Missing key or value."}
+                return Toolbox.archive_memory(key, value)
+                
+            elif action == "recall_memory":
+                query = params.get("query")
+                if not query: return {"error": "Missing query."}
+                return Toolbox.recall_memory(query)
 
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}

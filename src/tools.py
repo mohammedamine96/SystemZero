@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 import pyautogui 
 from src.vision import Vision
 from src.hands import Hands
+import json
+
 GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
 GLOBAL_EYES = Vision()
@@ -331,3 +333,51 @@ class Toolbox:
         Does NOT use the mouse cursor.
         """
         return GLOBAL_HANDS.click_element(name)
+    @staticmethod
+    def archive_memory(key, value):
+        """Saves a fact to long-term memory."""
+        file = "memory.json"
+        data = {}
+        if os.path.exists(file):
+            with open(file, "r") as f:
+                try: 
+                    data = json.load(f)
+                except json.JSONDecodeError: 
+                    pass
+        
+        data[key.lower()] = value
+        
+        with open(file, "w") as f:
+            json.dump(data, f, indent=4)
+            
+        return {"status": "success", "message": f"Archived to memory: [{key} = {value}]"}
+
+    @staticmethod
+    def recall_memory(query):
+        """Searches long-term memory for a keyword using fuzzy matching."""
+        file = "memory.json"
+        if not os.path.exists(file):
+            return {"error": "Memory bank is empty."}
+        
+        with open(file, "r") as f:
+            try: 
+                data = json.load(f)
+            except json.JSONDecodeError: 
+                return {"error": "Memory bank corrupted."}
+        
+        results = {}
+        # Split the query into individual words to make the search robust
+        query_words = query.lower().split()
+        
+        for key, value in data.items():
+            # Combine the key and value into one searchable string, replacing underscores with spaces
+            searchable_text = f"{key} {value}".lower().replace("_", " ")
+            
+            # Check for exact phrase match OR if any significant word from the query matches
+            if query.lower() in searchable_text or any(word in searchable_text for word in query_words if len(word) > 3):
+                results[key] = value
+                
+        if results:
+            return {"status": "success", "data": results}
+            
+        return {"error": f"No memories found matching '{query}'."}
