@@ -80,6 +80,12 @@ class Dispatcher:
                 if not name: return {"error": "Missing 'name' parameter."}
                 return Toolbox.click_button_name(name)
             
+            # --- ORACLE (APIs) ---
+            elif action == "get_weather":
+                location = params.get("location")
+                if not location: return {"error": "Missing 'location' parameter."}
+                return Toolbox.get_weather(location)
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

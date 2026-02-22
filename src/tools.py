@@ -314,3 +314,29 @@ class Toolbox:
             return {"status": "success", "data": results}
             
         return {"error": f"No memories found matching '{query}'."}
+        
+    @staticmethod
+    def get_weather(location):
+        """Fetches current weather for a specific location using a free public API."""
+        try:
+            # wttr.in is a fantastic free API that returns JSON when you append ?format=j1
+            url = f"https://wttr.in/{location}?format=j1"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                current = data['current_condition'][0]
+                temp_c = current['temp_C']
+                desc = current['weatherDesc'][0]['value']
+                
+                return {
+                    "status": "success", 
+                    "location": location, 
+                    "temperature_C": temp_c, 
+                    "description": desc
+                }
+            else:
+                return {"error": f"Weather API returned status {response.status_code}"}
+                
+        except Exception as e:
+            return {"error": f"Failed to fetch weather: {e}"}

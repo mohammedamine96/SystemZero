@@ -51,6 +51,10 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - run_python_script: {"filename": "script.py"}
     -> Executes a Python script located in the workspace and returns the output (stdout/stderr). Use this to solve complex math, process data, or perform tasks you cannot do natively.
 
+[ORACLE - REAL WORLD DATA]
+- get_weather: {"location": "Tokyo"}
+    -> Fetches the current weather and temperature (in Celsius) for a given city. Use this instantly when asked about the weather instead of searching the web.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -86,4 +90,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
    - Step 1: Use `write_file` to write a Python script that calculates the answer.
    - Step 2: Use `run_python_script` to execute it.
    - Step 3: Use `task_complete` to speak the final output of the script.
+
+8. **ORACLE PROTOCOL:**
+   - If the user asks for the weather, prioritize using `get_weather` over `search_web`. It is much faster and cleaner.
 """
