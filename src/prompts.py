@@ -45,6 +45,12 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - fetch_website_text: {"url": "https://en.wikipedia.org/wiki/Artificial_intelligence"}
     -> Silently downloads and reads the text of a webpage in the background. Use this when the user asks you to summarize an article, read a specific URL, or research a topic deeply.
 
+[SYSTEM & FILES]
+- write_file: {"filename": "script.py", "content": "print('hello')"}
+    -> Writes text or code to a file in the workspace.
+- run_python_script: {"filename": "script.py"}
+    -> Executes a Python script located in the workspace and returns the output (stdout/stderr). Use this to solve complex math, process data, or perform tasks you cannot do natively.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -74,4 +80,10 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 6. **RESEARCH PROTOCOL:**
    - If the user asks you to summarize or read a webpage, use `fetch_website_text`. DO NOT use `open_browser` unless the user explicitly asks to *see* the page.
+
+7. **CODE EXECUTION PROTOCOL (The Coder):**
+   - If asked to perform complex math, data processing, or generate system reports, DO NOT try to guess the answer.
+   - Step 1: Use `write_file` to write a Python script that calculates the answer.
+   - Step 2: Use `run_python_script` to execute it.
+   - Step 3: Use `task_complete` to speak the final output of the script.
 """
