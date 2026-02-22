@@ -8,10 +8,12 @@ import pyautogui
 from src.vision import Vision
 from src.hands import Hands
 import json
+import webbrowser
 
 GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
 GLOBAL_EYES = Vision()
+
 class Toolbox:
     @staticmethod
     def get_system_info():
@@ -38,12 +40,8 @@ class Toolbox:
 
     @staticmethod
     def read_file(path):
-        """
-        Reads a text file.
-        SECURITY: Enforces workspace lock and size limits.
-        """
+        """Reads a text file."""
         try:
-            # FIX: Automatically enforce workspace path
             if not path.startswith("workspace"):
                 target_path = os.path.join("workspace", path)
             else:
@@ -95,7 +93,7 @@ class Toolbox:
                 [sys.executable, target_path],
                 capture_output=True,
                 text=True,
-                timeout=10 # Increased timeout slightly
+                timeout=10 
             )
             
             return {
@@ -111,40 +109,38 @@ class Toolbox:
             return {"error": f"Execution Failure: {e}"}
         
     @staticmethod
-    def fetch_url(url):
+    def fetch_website_text(url):
+        """Silently fetches and extracts readable text from a webpage."""
         try:
-            if not url.startswith("http"):
-                return {"error": "Invalid URL."}
-
-            headers = {'User-Agent': 'SystemZero/1.0'}
-            response = requests.get(url, headers=headers, timeout=10)
-            
-            if response.status_code != 200:
-                return {"error": f"HTTP Error: {response.status_code}"}
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for script in soup(["script", "style"]):
-                script.decompose()
-            text = soup.get_text()
-            
-            lines = (line.strip() for line in text.splitlines())
-            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-            clean_text = '\n'.join(chunk for chunk in chunks if chunk)
-            
-            return {
-                "url": url,
-                "status": "success",
-                "content": clean_text[:4000] + "... (truncated)" if len(clean_text) > 4000 else clean_text
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
-
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, "html.parser")
+            
+            # Strip out scripts, styles, and navigation menus
+            for element in soup(["script", "style", "header", "footer", "nav", "aside"]):
+                element.extract()
+                
+            text = soup.get_text(separator=' ', strip=True)
+            
+            # Truncate to save the LLM's context window
+            max_chars = 8000
+            if len(text) > max_chars:
+                text = text[:max_chars] + "... [TEXT TRUNCATED DUE TO LENGTH]"
+                
+            return {"status": "success", "url": url, "text_preview": text}
+            
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Failed to connect to the website: {e}"}
         except Exception as e:
-            return {"error": f"Fetch Failure: {e}"}
+            return {"error": f"Failed to parse the website: {e}"}
 
     @staticmethod
     def search_web(query):
-        """
-        Performs a web search using DuckDuckGo HTML.
-        """
+        """Performs a web search using DuckDuckGo HTML."""
         try:
             url = "https://html.duckduckgo.com/html/"
             headers = {
@@ -179,9 +175,7 @@ class Toolbox:
 
     @staticmethod
     def capture_screen(filename="vision_context.png"):
-        """
-        Captures the screen for the 'look' command.
-        """
+        """Captures the screen for the 'look' command."""
         try:
             target_path = os.path.join("workspace", filename)
             screenshot = pyautogui.screenshot()
@@ -191,42 +185,17 @@ class Toolbox:
             return {"error": f"Screen Capture Failed: {e}"}
             
     @staticmethod
-    def archive_memory(key, value):
-        import json
-        memory_file = "workspace/memory.json"
-        try:
-            data = {}
-            if os.path.exists(memory_file):
-                with open(memory_file, 'r') as f:
-                    data = json.load(f)
-            data[key] = value
-            with open(memory_file, 'w') as f:
-                json.dump(data, f, indent=2)
-            return {"status": "success", "message": f"Memorized {key}"}
-        except Exception as e:
-            return {"error": f"Archive Failure: {e}"}
-        
-    @staticmethod
     def mouse_move(x, y):
-        """
-        Moves the cursor to specific coordinates.
-        params: x (int), y (int)
-        """
         try:
             import pyautogui
-            # Safety: Fail-safe triggers if mouse is slammed to a corner
             pyautogui.FAILSAFE = True 
-            pyautogui.moveTo(x, y, duration=0.5) # duration prevents instant teleportation
+            pyautogui.moveTo(x, y, duration=0.5) 
             return {"status": "success", "action": f"Moved to {x}, {y}"}
         except Exception as e:
             return {"error": f"Mouse Error: {e}"}
 
     @staticmethod
     def mouse_click(button="left"):
-        """
-        Clicks the mouse.
-        params: button ("left", "right", "double")
-        """
         try:
             import pyautogui
             if button == "double":
@@ -239,23 +208,15 @@ class Toolbox:
 
     @staticmethod
     def type_text(text):
-        """
-        Types text on the keyboard.
-        params: text (str)
-        """
         try:
             import pyautogui
-            pyautogui.write(text, interval=0.05) # interval makes it look natural
+            pyautogui.write(text, interval=0.05)
             return {"status": "success", "action": f"Typed: {text}"}
         except Exception as e:
             return {"error": f"Typing Error: {e}"}
 
     @staticmethod
     def press_key(key):
-        """
-        Presses a specific key (e.g., 'enter', 'win', 'tab').
-        params: key (str)
-        """
         try:
             import pyautogui
             pyautogui.press(key)
@@ -265,18 +226,10 @@ class Toolbox:
         
     @staticmethod
     def open_browser(url):
-        """
-        Opens the default web browser to a specific URL.
-        SECURITY: This bypasses GUI typing errors (like autocomplete).
-        """
-        import webbrowser
         try:
-            # We strip quotes just in case the LLM hallucinates them
             clean_url = url.strip().strip('"').strip("'")
-            
             if not clean_url.startswith("http"):
                 clean_url = "https://" + clean_url
-                
             webbrowser.open(clean_url)
             return {"status": "success", "action": f"Opened {clean_url}"}
         except Exception as e:
@@ -284,10 +237,6 @@ class Toolbox:
     
     @staticmethod
     def click_text(text, button="left"):
-        """
-        Scans the screen for text and clicks it.
-        params: text (str), button ("left", "right")
-        """
         try:
             print(f">> [TOOL] Looking for '{text}'...")
             coords = GLOBAL_EYES.find_element(text)
@@ -295,7 +244,6 @@ class Toolbox:
             if not coords:
                 return {"status": "error", "message": f"Could not see text: '{text}' on screen."}
 
-            # Move and Click
             import pyautogui
             pyautogui.moveTo(coords['x'], coords['y'], duration=0.5)
             pyautogui.click(button=button)
@@ -308,17 +256,9 @@ class Toolbox:
             return {"error": f"Visual Click Failed: {e}"}
     
     @staticmethod
-    @staticmethod
     def inspect_window():
-        """
-        Returns a list of buttons/inputs in the current window.
-        Use this BEFORE trying to click something to see what's available.
-        """
         try:
-            # Get the raw text tree from the Hands module
             ui_tree = GLOBAL_HANDS.inspect_ui()
-            
-            # WRAP IT IN A DICTIONARY
             return {
                 "status": "success", 
                 "observation": ui_tree
@@ -328,11 +268,8 @@ class Toolbox:
 
     @staticmethod
     def click_button_name(name):
-        """
-        Clicks a button by its exact name (e.g., 'File', 'Send', 'Search').
-        Does NOT use the mouse cursor.
-        """
         return GLOBAL_HANDS.click_element(name)
+
     @staticmethod
     def archive_memory(key, value):
         """Saves a fact to long-term memory."""
@@ -366,14 +303,10 @@ class Toolbox:
                 return {"error": "Memory bank corrupted."}
         
         results = {}
-        # Split the query into individual words to make the search robust
         query_words = query.lower().split()
         
         for key, value in data.items():
-            # Combine the key and value into one searchable string, replacing underscores with spaces
             searchable_text = f"{key} {value}".lower().replace("_", " ")
-            
-            # Check for exact phrase match OR if any significant word from the query matches
             if query.lower() in searchable_text or any(word in searchable_text for word in query_words if len(word) > 3):
                 results[key] = value
                 

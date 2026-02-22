@@ -27,19 +27,29 @@ class Dispatcher:
             elif action == "run_python_script":
                 return Toolbox.run_python_script(params.get("filename"))
             
-            # --- WEB ---
+            # --- WEB (THE RESEARCHER) ---
             elif action == "open_browser":
                 return Toolbox.open_browser(params.get("url"))
             
             elif action == "search_web":
                 return Toolbox.search_web(params.get("query"))
 
-            elif action == "fetch_url":
-                return Toolbox.fetch_url(params.get("url"))
+            elif action == "fetch_website_text":
+                url = params.get("url")
+                if not url: return {"error": "Missing 'url' parameter."}
+                return Toolbox.fetch_website_text(url)
             
-            # --- MEMORY ---
+            # --- MEMORY (HIPPOCAMPUS) ---
             elif action == "archive_memory":
-                return Toolbox.archive_memory(params.get("key"), params.get("value"))
+                key = params.get("key")
+                value = params.get("value")
+                if not key or not value: return {"error": "Missing key or value."}
+                return Toolbox.archive_memory(key, value)
+                
+            elif action == "recall_memory":
+                query = params.get("query")
+                if not query: return {"error": "Missing query."}
+                return Toolbox.recall_memory(query)
 
             # --- KEYBOARD & MOUSE (BLIND) ---
             elif action == "mouse_move":
@@ -75,18 +85,6 @@ class Dispatcher:
                 summary = params.get("summary", "Task Completed.")
                 print(f"\n>> [MISSION ACCOMPLISHED]: {summary}")
                 return {"status": "task_complete", "message": summary}
-            
-            # --- MEMORY (HIPPOCAMPUS) ---
-            elif action == "archive_memory":
-                key = params.get("key")
-                value = params.get("value")
-                if not key or not value: return {"error": "Missing key or value."}
-                return Toolbox.archive_memory(key, value)
-                
-            elif action == "recall_memory":
-                query = params.get("query")
-                if not query: return {"error": "Missing query."}
-                return Toolbox.recall_memory(query)
 
             elif action == "error":
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
