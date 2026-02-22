@@ -86,6 +86,12 @@ class Dispatcher:
                 if not location: return {"error": "Missing 'location' parameter."}
                 return Toolbox.get_weather(location)
             
+            # --- MAESTRO (SYSTEM CONTROL) ---
+            elif action == "control_media":
+                cmd = params.get("command")
+                if not cmd: return {"error": "Missing 'command' parameter."}
+                return Toolbox.control_media(cmd)
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

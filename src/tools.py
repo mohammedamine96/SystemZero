@@ -340,3 +340,34 @@ class Toolbox:
                 
         except Exception as e:
             return {"error": f"Failed to fetch weather: {e}"}
+    
+    @staticmethod
+    def control_media(command):
+        """Controls system volume and media playback directly via OS hooks."""
+        try:
+            import pyautogui
+            # The exact key codes Windows uses for media control
+            valid_commands = ["volumeup", "volumedown", "volumemute", "playpause", "nexttrack", "prevtrack"]
+            
+            command = command.lower().replace(" ", "").replace("_", "")
+            
+            # Map friendly names to actual key codes
+            if command in ["mute", "unmute"]: command = "volumemute"
+            elif command in ["up", "louder"]: command = "volumeup"
+            elif command in ["down", "quieter"]: command = "volumedown"
+            elif command in ["play", "pause", "stop"]: command = "playpause"
+            elif command in ["next", "skip"]: command = "nexttrack"
+            elif command in ["previous", "prev", "back"]: command = "prevtrack"
+
+            if command in valid_commands:
+                # If adjusting volume, press it 5 times so the change is actually noticeable (10% change)
+                if command in ["volumeup", "volumedown"]:
+                    pyautogui.press(command, presses=5)
+                else:
+                    pyautogui.press(command)
+                return {"status": "success", "action": f"Executed OS media command: {command}"}
+            else:
+                return {"error": f"Invalid command. Valid native keys: {valid_commands}"}
+                
+        except Exception as e:
+            return {"error": f"Media control failed: {e}"}

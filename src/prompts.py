@@ -55,6 +55,11 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - get_weather: {"location": "Tokyo"}
     -> Fetches the current weather and temperature (in Celsius) for a given city. Use this instantly when asked about the weather instead of searching the web.
 
+[MAESTRO - SYSTEM CONTROL]
+- control_media: {"command": "volumemute"}
+    -> Controls system volume and media playback. 
+    -> Valid commands: "volumeup", "volumedown", "volumemute", "playpause", "nexttrack", "prevtrack". Use this for requests like "mute the audio", "turn the volume up", "skip this song", or "pause the music". Do NOT use the mouse to change volume.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -93,4 +98,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 8. **ORACLE PROTOCOL:**
    - If the user asks for the weather, prioritize using `get_weather` over `search_web`. It is much faster and cleaner.
+
+9. **MAESTRO PROTOCOL:**
+   - If the user asks to change the volume, mute the PC, or control music, instantly use `control_media`. Never try to open the settings app or use the mouse for media controls.
 """
