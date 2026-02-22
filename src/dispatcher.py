@@ -92,6 +92,13 @@ class Dispatcher:
                 if not cmd: return {"error": "Missing 'command' parameter."}
                 return Toolbox.control_media(cmd)
             
+            # --- COMMUNICATOR (MESSAGING) ---
+            elif action == "send_whatsapp":
+                phone = params.get("phone_number")
+                msg = params.get("message")
+                if not phone or not msg: return {"error": "Missing 'phone_number' or 'message'."}
+                return Toolbox.send_whatsapp(phone, msg)
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

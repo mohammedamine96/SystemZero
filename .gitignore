@@ -6,4 +6,5 @@ venv/
 .DS_Store
 vision_context.png
 vision_diagnostic_result.png
+memory.json
 response.mp3

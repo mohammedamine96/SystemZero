@@ -9,6 +9,8 @@ from src.vision import Vision
 from src.hands import Hands
 import json
 import webbrowser
+import urllib.parse
+import time
 
 GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
@@ -371,3 +373,37 @@ class Toolbox:
                 
         except Exception as e:
             return {"error": f"Media control failed: {e}"}
+        
+    @staticmethod
+    def send_whatsapp(phone_number, message):
+        """Automates WhatsApp Web to send a message."""
+        try:
+            # Clean the phone number (remove spaces, ensure it has the + country code)
+            clean_number = phone_number.replace(" ", "")
+            if not clean_number.startswith("+"):
+                return {"error": "Phone number must include the country code (e.g., +1234567890)."}
+
+            # Safely encode the message for a URL
+            encoded_msg = urllib.parse.quote(message)
+            url = f"https://web.whatsapp.com/send?phone={clean_number}&text={encoded_msg}"
+            
+            print(f">> [COMMUNICATOR] Opening WhatsApp Web for {clean_number}...")
+            import webbrowser
+            import pyautogui
+            
+            webbrowser.open(url)
+            
+            # Wait for WhatsApp Web to load (Increase this to 15-20 if your PC/Internet is slow)
+            time.sleep(12) 
+            
+            print(">> [COMMUNICATOR] Injecting 'Enter' key to send...")
+            pyautogui.press('enter')
+            
+            # Wait a moment for it to send, then close the tab
+            time.sleep(2)
+            pyautogui.hotkey('ctrl', 'w')
+            
+            return {"status": "success", "message": f"WhatsApp message sent to {clean_number}."}
+            
+        except Exception as e:
+            return {"error": f"WhatsApp automation failed: {e}"}

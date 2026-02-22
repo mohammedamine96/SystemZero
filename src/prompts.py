@@ -60,6 +60,10 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
     -> Controls system volume and media playback. 
     -> Valid commands: "volumeup", "volumedown", "volumemute", "playpause", "nexttrack", "prevtrack". Use this for requests like "mute the audio", "turn the volume up", "skip this song", or "pause the music". Do NOT use the mouse to change volume.
 
+[COMMUNICATOR - MESSAGING]
+- send_whatsapp: {"phone_number": "+1234567890", "message": "I will be 10 minutes late!"}
+    -> Opens WhatsApp Web, types, and sends a message automatically. You MUST format the phone number with the country code (+). Use this when the user asks to text or WhatsApp someone.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -101,4 +105,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 9. **MAESTRO PROTOCOL:**
    - If the user asks to change the volume, mute the PC, or control music, instantly use `control_media`. Never try to open the settings app or use the mouse for media controls.
+
+10. **COMMUNICATOR PROTOCOL:**
+    - If the user asks to send a WhatsApp message but does not provide a phone number, politely ask them for the number (or check your `recall_memory` to see if you have it saved!).
 """
