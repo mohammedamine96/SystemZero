@@ -11,6 +11,7 @@ import json
 import webbrowser
 import urllib.parse
 import time
+import threading
 
 GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
@@ -407,3 +408,35 @@ class Toolbox:
             
         except Exception as e:
             return {"error": f"WhatsApp automation failed: {e}"}
+        
+    @staticmethod
+    def set_reminder(minutes, message):
+        """Sets a background timer that speaks a message when time is up."""
+        try:
+            seconds = float(minutes) * 60
+
+            def reminder_callback():
+                print(f"\n>> [CHRONOS] ⏰ ALARM TRIGGERED: {message}")
+                
+                # Play a system alert chime
+                try:
+                    import winsound
+                    winsound.MessageBeep(winsound.MB_ICONASTERISK)
+                except:
+                    pass
+                
+                # Use a native PowerShell hidden thread to speak the alarm
+                # This ensures we don't crash the main System Zero voice engine!
+                safe_msg = message.replace("'", "").replace('"', '')
+                ps_command = f'powershell -Command "Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak(\'Pardon the interruption, Operator. Reminder: {safe_msg}\');"'
+                import os
+                os.system(ps_command)
+
+            # Start the background thread
+            t = threading.Timer(seconds, reminder_callback)
+            t.daemon = True # Ensures the timer dies if you close the program
+            t.start()
+
+            return {"status": "success", "message": f"Timer set for {minutes} minutes."}
+        except Exception as e:
+            return {"error": f"Failed to set timer: {e}"}

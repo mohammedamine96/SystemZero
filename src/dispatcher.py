@@ -92,6 +92,12 @@ class Dispatcher:
                 if not cmd: return {"error": "Missing 'command' parameter."}
                 return Toolbox.control_media(cmd)
             
+            elif action == "set_reminder":
+                mins = params.get("minutes")
+                msg = params.get("message")
+                if not mins or not msg: return {"error": "Missing 'minutes' or 'message'."}
+                return Toolbox.set_reminder(mins, msg)
+            
             # --- COMMUNICATOR (MESSAGING) ---
             elif action == "send_whatsapp":
                 phone = params.get("phone_number")

@@ -64,6 +64,10 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - send_whatsapp: {"phone_number": "+1234567890", "message": "I will be 10 minutes late!"}
     -> Opens WhatsApp Web, types, and sends a message automatically. You MUST format the phone number with the country code (+). Use this when the user asks to text or WhatsApp someone.
 
+[CHRONOS - TIME & ALARMS]
+- set_reminder: {"minutes": 20, "message": "check the oven"}
+    -> Sets a background timer that will alert the user after the specified number of minutes. Use this when the user asks to be reminded of something in the future or set a timer. If the user asks for seconds or hours, convert it to minutes first (e.g., 30 seconds = 0.5 minutes).
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -108,4 +112,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 10. **COMMUNICATOR PROTOCOL:**
     - If the user asks to send a WhatsApp message but does not provide a phone number, politely ask them for the number (or check your `recall_memory` to see if you have it saved!).
+
+11. **CHRONOS PROTOCOL:**
+    - If the user asks for a timer or reminder, use `set_reminder`, then immediately use `task_complete` to confirm to the user that the timer is running in the background.
 """
