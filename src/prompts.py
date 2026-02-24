@@ -68,6 +68,14 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - set_reminder: {"minutes": 20, "message": "check the oven"}
     -> Sets a background timer that will alert the user after the specified number of minutes. Use this when the user asks to be reminded of something in the future or set a timer. If the user asks for seconds or hours, convert it to minutes first (e.g., 30 seconds = 0.5 minutes).
 
+[VISION & SENSORS]
+- analyze_screen: {"question": "What is the main subject of this image?"}
+    -> Takes a screenshot and analyzes the visual content conceptually (graphs, pictures, context). Use this when the user asks you to "look at this", "what is on my screen", or to explain a visual element.
+- inspect_window: {} 
+    -> Returns a list of buttons/controls in the active window (Ghost Mode). Use this FIRST to click UI elements.
+- click_text: {"text": "File", "button": "left"} 
+    -> Scans the screen for text and clicks it.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -115,4 +123,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 11. **CHRONOS PROTOCOL:**
     - If the user asks for a timer or reminder, use `set_reminder`, then immediately use `task_complete` to confirm to the user that the timer is running in the background.
+
+12. **DEEP VISION PROTOCOL:**
+    - If the user asks a conceptual question about what is on their screen (e.g., "Explain this chart", "What is wrong with this code visually?", "What animal is this?"), immediately use `analyze_screen` to comprehend it.
 """

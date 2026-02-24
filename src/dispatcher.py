@@ -105,6 +105,16 @@ class Dispatcher:
                 if not phone or not msg: return {"error": "Missing 'phone_number' or 'message'."}
                 return Toolbox.send_whatsapp(phone, msg)
             
+            # --- VISION (EYES) ---
+            elif action == "analyze_screen":
+                question = params.get("question", "What is on the screen?")
+                return Toolbox.analyze_screen(question)
+
+            elif action == "click_text":
+                text = params.get("text")
+                if not text: return {"error": "Missing 'text' parameter."}
+                return Toolbox.click_text(text, params.get("button", "left"))
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

@@ -440,3 +440,66 @@ class Toolbox:
             return {"status": "success", "message": f"Timer set for {minutes} minutes."}
         except Exception as e:
             return {"error": f"Failed to set timer: {e}"}
+
+    @staticmethod
+    def analyze_screen(question="Describe what is on the screen."):
+        """Takes a screenshot and uses a Vision-Language Model to understand it conceptually."""
+        try:
+            import base64
+            import io
+            import os
+            import requests
+            import pyautogui
+            from PIL import Image
+
+            print(">> [EYES] Capturing visual field for deep analysis...")
+            
+            # 1. Capture the screen and FORCE it to RGB (Strips out invisible Alpha channels)
+            screenshot = pyautogui.screenshot().convert("RGB")
+            
+            # 2. Resize and compress the image
+            screenshot.thumbnail((1024, 1024))
+            buffered = io.BytesIO()
+            screenshot.save(buffered, format="JPEG", quality=80)
+            img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+
+            api_key = os.environ.get("GROQ_API_KEY")
+            if not api_key:
+                return {"error": "GROQ_API_KEY not found in environment."}
+
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            payload = {
+                "model": "llama-3.2-11b-vision-preview",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": question},
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_str}"}}
+                        ]
+                    }
+                ],
+                "temperature": 0.5,
+                "max_completion_tokens": 1024 # Updated to Groq's new standard parameter
+            }
+
+            response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload)
+            
+            # --- THE DIAGNOSTIC FIX ---
+            # If Groq rejects the payload, print the EXACT reason why
+            if response.status_code != 200:
+                print(f"\n>> [EYES] 🛑 API REJECTION DATA: {response.text}\n")
+                return {"error": f"Groq Vision Error {response.status_code}: {response.text}"}
+                
+            data = response.json()
+            vision_text = data["choices"][0]["message"]["content"]
+            print(f">> [EYES] Analysis complete.")
+            
+            return {"status": "success", "analysis": vision_text}
+            
+        except Exception as e:
+            return {"error": f"Deep Vision analysis failed: {e}"}
