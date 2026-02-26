@@ -492,7 +492,7 @@ class Toolbox:
             # --- THE DIAGNOSTIC FIX ---
             # If Groq rejects the payload, print the EXACT reason why
             if response.status_code != 200:
-                print(f"\n>> [EYES] 🛑 API REJECTION DATA: {response.text}\n")
+                print(f"\n>> [EYES] API REJECTION DATA: {response.text}\n")
                 return {"error": f"Groq Vision Error {response.status_code}: {response.text}"}
                 
             data = response.json()
@@ -503,3 +503,52 @@ class Toolbox:
             
         except Exception as e:
             return {"error": f"Deep Vision analysis failed: {e}"}
+
+    @staticmethod
+    def check_system_health():
+        """Monitors CPU, RAM, and top running processes."""
+        try:
+            import psutil
+            # Get CPU and RAM percentages
+            cpu = psutil.cpu_percent(interval=1)
+            ram = psutil.virtual_memory().percent
+            
+            # Find the top 3 memory-hogging processes
+            processes = []
+            for proc in psutil.process_iter(['name', 'memory_percent']):
+                try:
+                    processes.append(proc.info)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            
+            # Sort by memory usage and grab the top 3
+            processes = sorted(processes, key=lambda p: p['memory_percent'] or 0, reverse=True)[:3]
+            top_procs = [f"{p['name']} ({p['memory_percent']:.1f}% RAM)" for p in processes]
+            
+            return {
+                "status": "success",
+                "cpu_usage_percent": cpu,
+                "ram_usage_percent": ram,
+                "top_processes": top_procs
+            }
+        except Exception as e:
+            return {"error": f"Health check failed: {e}"}
+
+    @staticmethod
+    def kill_process(process_name):
+        """Terminates a running background process by name."""
+        try:
+            import psutil
+            killed = 0
+            # Search for any process matching the name and terminate it
+            for proc in psutil.process_iter(['name']):
+                if process_name.lower() in str(proc.info['name']).lower():
+                    proc.kill()
+                    killed += 1
+            
+            if killed > 0:
+                return {"status": "success", "message": f"Terminated {killed} instance(s) of {process_name}."}
+            else:
+                return {"error": f"Process '{process_name}' not found running."}
+        except Exception as e:
+            return {"error": f"Failed to kill process: {e}"}

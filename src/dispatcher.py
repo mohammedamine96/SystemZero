@@ -115,6 +115,15 @@ class Dispatcher:
                 if not text: return {"error": "Missing 'text' parameter."}
                 return Toolbox.click_text(text, params.get("button", "left"))
             
+            # --- SENTINEL (PC HEALTH & DIAGNOSTICS) ---
+            elif action == "check_system_health":
+                return Toolbox.check_system_health()
+                
+            elif action == "kill_process":
+                name = params.get("process_name")
+                if not name: return {"error": "Missing 'process_name' parameter."}
+                return Toolbox.kill_process(name)
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

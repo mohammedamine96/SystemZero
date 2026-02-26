@@ -76,6 +76,12 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - click_text: {"text": "File", "button": "left"} 
     -> Scans the screen for text and clicks it.
 
+[SENTINEL - PC HEALTH & DIAGNOSTICS]
+- check_system_health: {}
+    -> Returns current CPU usage, RAM usage, and the top 3 background processes consuming memory. Use this when the user asks why the PC is slow, hot, or asks for a health check.
+- kill_process: {"process_name": "chrome.exe"}
+    -> Force-quits a running background process. Only use this if the user explicitly authorizes you to kill/close a specific app.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -126,4 +132,8 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 12. **DEEP VISION PROTOCOL:**
     - If the user asks a conceptual question about what is on their screen (e.g., "Explain this chart", "What is wrong with this code visually?", "What animal is this?"), immediately use `analyze_screen` to comprehend it.
+
+13. **SENTINEL PROTOCOL:**
+    - If the user asks about system performance or lag, use `check_system_health` first. Report the findings to the user and ask if they want you to kill any heavy processes.
+    - Do not use `kill_process` on critical Windows tasks (like explorer.exe) unless explicitly ordered.
 """
