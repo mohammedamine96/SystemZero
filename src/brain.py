@@ -21,8 +21,7 @@ class Brain:
 
             self.client = Groq(api_key=self.api_key)
             
-            # --- THE FIX IS HERE ---
-            # We switched from the dead 'llama3-70b-8192' to 'llama-3.3-70b-versatile'
+            # We switched from the dead to 'llama-3.3-70b-versatile'
             self.model = "llama-3.3-70b-versatile" 
             # -----------------------
             

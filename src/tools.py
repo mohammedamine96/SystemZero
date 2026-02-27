@@ -552,3 +552,44 @@ class Toolbox:
                 return {"error": f"Process '{process_name}' not found running."}
         except Exception as e:
             return {"error": f"Failed to kill process: {e}"}
+    
+    @staticmethod
+    def read_pdf(filename):
+        """Reads and extracts text from a PDF document in the workspace using PyPDF2."""
+        try:
+            import PyPDF2
+            import os
+            
+            # Ensure we are looking in the workspace folder
+            target_path = os.path.join("workspace", filename)
+            if not os.path.exists(target_path):
+                return {"error": f"PDF not found at: {target_path}"}
+            
+            print(f">> [SCHOLAR] Ingesting binary document via PyPDF2: {filename}...")
+            
+            text = ""
+            # Open the file in binary read mode
+            with open(target_path, "rb") as file:
+                reader = PyPDF2.PdfReader(file)
+                num_pages = len(reader.pages)
+                
+                # Extract text from every page
+                for i in range(num_pages):
+                    page = reader.pages[i]
+                    extracted = page.extract_text()
+                    if extracted:
+                        text += f"\n--- Page {i + 1} ---\n"
+                        text += extracted
+            
+            # Truncate if the PDF is absurdly long (protects the Brain's memory limit)
+            max_chars = 15000 
+            if len(text) > max_chars:
+                text = text[:max_chars] + "\n... [TEXT TRUNCATED DUE TO LENGTH]"
+                
+            print(f">> [SCHOLAR] Extraction complete. Processed {num_pages} pages.")
+            return {"status": "success", "filename": filename, "content": text}
+            
+        except ImportError:
+            return {"error": "PyPDF2 is not installed. Run: pip install PyPDF2"}
+        except Exception as e:
+            return {"error": f"Failed to read PDF: {e}"}

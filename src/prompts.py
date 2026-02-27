@@ -82,6 +82,10 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - kill_process: {"process_name": "chrome.exe"}
     -> Force-quits a running background process. Only use this if the user explicitly authorizes you to kill/close a specific app.
 
+[SCHOLAR - DOCUMENT ANALYSIS]
+- read_pdf: {"filename": "report.pdf"}
+    -> Extracts and reads all text from a PDF file located in the workspace folder. Use this when the user asks you to read, summarize, analyze, or find specific information inside a PDF document.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -136,4 +140,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 13. **SENTINEL PROTOCOL:**
     - If the user asks about system performance or lag, use `check_system_health` first. Report the findings to the user and ask if they want you to kill any heavy processes.
     - Do not use `kill_process` on critical Windows tasks (like explorer.exe) unless explicitly ordered.
+
+14. **SCHOLAR PROTOCOL:**
+    - If the user asks a question about a PDF document, first use `read_pdf` to ingest its contents. Then, analyze the extracted text and use `task_complete` to give the user the exact answer or summary they requested.
 """

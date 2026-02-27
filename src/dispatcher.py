@@ -124,6 +124,12 @@ class Dispatcher:
                 if not name: return {"error": "Missing 'process_name' parameter."}
                 return Toolbox.kill_process(name)
             
+            # --- SCHOLAR (DOCUMENT PARSING) ---
+            elif action == "read_pdf":
+                filename = params.get("filename")
+                if not filename: return {"error": "Missing 'filename' parameter."}
+                return Toolbox.read_pdf(filename)
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")
