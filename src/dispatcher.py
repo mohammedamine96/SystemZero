@@ -41,14 +41,13 @@ class Dispatcher:
             
             # --- MEMORY (HIPPOCAMPUS) ---
             elif action == "archive_memory":
-                key = params.get("key")
-                value = params.get("value")
-                if not key or not value: return {"error": "Missing key or value."}
-                return Toolbox.archive_memory(key, value)
+                fact = params.get("fact")
+                if not fact: return {"error": "Missing 'fact' parameter."}
+                return Toolbox.archive_memory(fact)
                 
             elif action == "recall_memory":
                 query = params.get("query")
-                if not query: return {"error": "Missing query."}
+                if not query: return {"error": "Missing 'query' parameter."}
                 return Toolbox.recall_memory(query)
 
             # --- KEYBOARD & MOUSE (BLIND) ---

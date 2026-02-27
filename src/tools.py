@@ -17,6 +17,9 @@ GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
 GLOBAL_EYES = Vision()
 
+from src.memory import SemanticMemory
+GLOBAL_MEMORY = SemanticMemory()
+
 class Toolbox:
     @staticmethod
     def get_system_info():
@@ -274,49 +277,20 @@ class Toolbox:
         return GLOBAL_HANDS.click_element(name)
 
     @staticmethod
-    def archive_memory(key, value):
-        """Saves a fact to long-term memory."""
-        file = "memory.json"
-        data = {}
-        if os.path.exists(file):
-            with open(file, "r") as f:
-                try: 
-                    data = json.load(f)
-                except json.JSONDecodeError: 
-                    pass
-        
-        data[key.lower()] = value
-        
-        with open(file, "w") as f:
-            json.dump(data, f, indent=4)
-            
-        return {"status": "success", "message": f"Archived to memory: [{key} = {value}]"}
+    def archive_memory(fact):
+        """Saves a natural language fact to the vector database."""
+        try:
+            return GLOBAL_MEMORY.memorize(fact)
+        except Exception as e:
+            return {"error": f"Memory Archive Failed: {e}"}
 
     @staticmethod
     def recall_memory(query):
-        """Searches long-term memory for a keyword using fuzzy matching."""
-        file = "memory.json"
-        if not os.path.exists(file):
-            return {"error": "Memory bank is empty."}
-        
-        with open(file, "r") as f:
-            try: 
-                data = json.load(f)
-            except json.JSONDecodeError: 
-                return {"error": "Memory bank corrupted."}
-        
-        results = {}
-        query_words = query.lower().split()
-        
-        for key, value in data.items():
-            searchable_text = f"{key} {value}".lower().replace("_", " ")
-            if query.lower() in searchable_text or any(word in searchable_text for word in query_words if len(word) > 3):
-                results[key] = value
-                
-        if results:
-            return {"status": "success", "data": results}
-            
-        return {"error": f"No memories found matching '{query}'."}
+        """Searches the vector database for semantic matches."""
+        try:
+            return GLOBAL_MEMORY.recall(query)
+        except Exception as e:
+            return {"error": f"Memory Recall Failed: {e}"}
         
     @staticmethod
     def get_weather(location):

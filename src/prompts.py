@@ -32,11 +32,11 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
     -> Clicks current mouse position.
 
 [MEMORY]
-- archive_memory: {"key": "wifi_password", "value": "Matrix2026"}
-    -> Saves a permanent fact about the user or system. Use this when the user asks you to remember something.
-- recall_memory: {"query": "wifi"}
-    -> Searches your long-term memory for a keyword. Use this FIRST if you are asked a question about the user's personal data, passwords, or preferences before saying you don't know.
-
+- archive_memory: {"fact": "My favorite programming language is Python and I am building an AI named System Zero."}
+    -> Saves a permanent, natural-language fact about the user, system, or current project into the Neural Vector Database. Use this whenever the user tells you personal details, ideas, or rules.
+- recall_memory: {"query": "What is the user's favorite language?"}
+    -> Performs a semantic search across all long-term memories. Use this FIRST if you are asked a question about the user, past conversations, or preferences before saying you don't know.
+    
 [WEB & BROWSER]
 - open_browser: {"url": "https://google.com"} 
     -> Opens a visible browser window for the user.
