@@ -1,89 +1,69 @@
-# ⚡ System Zero (v3.1)
+# 🌌 System Zero (v3.1)
+**The Autonomous, Multimodal Desktop Agent**
 
-**The Fully Autonomous, Voice-Activated Desktop Agent.**
-
-System Zero is a local-first AI agent that operates your Windows PC. It uses **Llama 3.3** for reasoning, **Computer Vision** to see the screen, and **Direct UI Injection** to control applications without hijacking your mouse.
-
-It features a "God Mode" (Trust Session) for continuous, hands-free voice command execution.
-
-## 🌟 Key Capabilities
-
-### 🧠 The Brain (Groq Llama 3.3)
-* **Model:** Llama 3.3 70B (Versatile).
-* **Speed:** ~300 tokens/sec.
-* **Logic:** Follows strict JSON schemas for deterministic control.
-
-### 👁️ The Eyes (Computer Vision)
-* **Engine:** EasyOCR + OpenCV (CUDA Accelerated).
-* **Function:** Scans the screen for text/buttons when "Ghost Mode" fails.
-* **Latency:** <2s with GPU acceleration.
-
-### ✋ The Hands (Ghost Mode)
-* **Technology:** `pywinauto` (Windows UI Automation).
-* **Capability:** Clicks buttons directly via API injection (0ms latency, invisible to the user).
-* **Fallback:** Uses standard `pyautogui` mouse movement if API injection fails.
-
-### 👂 The Ears (Continuous Listening)
-* **Wake Word:** "Start" (Passive Listening Loop).
-* **Protocol:** Once activated, it enters a continuous conversation loop.
-* **Commands:** "Sleep", "Stop Listening", "Switch to Text".
-
-### 🗣️ The Mouth (Neural Speech)
-* **Engine:** Edge-TTS (Microsoft Azure Neural Voices).
-* **Behavior:** Blocking/Synchronous speech (Agent waits for speech to finish before acting).
+System Zero is an advanced, locally-hosted AI assistant that lives inside your Windows operating system. Powered by Groq's blazing-fast inference and Llama 3/4 models, System Zero doesn't just chat—it *acts*. It can see your screen, control your mouse and keyboard, read local files, scrape the web, and manage your PC hardware, all driven by voice commands.
 
 ---
 
-## 🚀 Installation
+## 🧠 Core Capabilities (The Modules)
 
-### 1. Clone & Environment
-```bash
-git clone https://github.com/mohammedamine96/SystemZero.git
-cd SystemZero
-python -m venv venv
-.\venv\Scripts\activate
-```
+* **🎙️ Audio Cortex (Ears & Mouth):** Always-on wake-word detection ("Zero") with native Windows TTS responses.
+* **👁️ True Vision (Llama-4-Scout):** Can capture the screen and conceptually understand images, charts, and UI layouts.
+* **👻 Ghost Hands:** Inspects the raw Windows UI tree to interact with buttons directly, bypassing coordinate clicking.
+* **💻 The Coder:** Can autonomously write, save, and execute Python scripts to solve complex math or data problems.
+* **📚 The Scholar:** Reads and extracts intelligence directly from binary `.pdf` documents using `PyPDF2`.
+* **🛡️ The Sentinel:** Monitors PC hardware (CPU/RAM) and acts as a digital scalpel to terminate rogue background processes.
+* **⏱️ Chronos:** Manages background threads to track time and trigger native PowerShell alarms without interrupting the main loop.
+* **🌍 The Researcher:** Silently scrapes web pages, bypasses HTML clutter, and extracts clean text for summarization.
+* **📱 The Communicator:** Automates WhatsApp Web to send messages to contacts.
+* **💾 The Hippocampus:** A persistent long-term memory drive (`memory.json`) for recalling user facts and secrets.
+* **🎵 The Maestro:** Deep OS hooks for controlling native media playback and volume.
 
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-> **Note:** For GPU acceleration (recommended), install PyTorch with CUDA support manually.
+---
 
-### 3. Configuration
-Create a `.env` file in the root directory:
-```ini
-GROQ_API_KEY=gsk_your_key_here
-```
+## 🚀 Installation & Setup
 
-## 🎮 Usage Guide
+1. **Clone & Environment:**
+   ```bash
+   git clone <your-repo-url>
+   cd SystemZero
+   python -m venv venv
+   venv\Scripts\activate
+   ```
 
-### 🗣️ Voice Mode (The "Ironman" Experience)
-1. Run the agent: `python main.py`
-2. Type `voice` to enter Voice Mode.
-3. Say "Start" to wake the agent.
-4. **Issue Commands:** "Open Notepad", "Search YouTube for lo-fi music", etc.
+2. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   *(Note: Ensure PyAudio, PyAutoGUI, UIAutomation, PyPDF2, psutil, and groq are installed).*
 
-> **God Mode:** In Voice Mode, the agent does not ask for confirmation. It executes commands instantly.
+3. **API Keys:**
+   Create a `.env` file in the root directory and add your Groq API Key:
+   ```env
+   GROQ_API_KEY=your_key_here
+   ```
 
-### 🖥️ Text Mode (Safe Mode)
-1. Run the agent: `python main.py`
-2. Type commands manually.
+4. **Ignition:**
+   ```bash
+   python main.py
+   ```
 
-> **Safety Gate:** The agent will ask for confirmation (y/n) before executing actions.
+---
 
-## 📂 Architecture
+## 📖 Version History
 
-| Module | Function |
-| :--- | :--- |
-| `main.py` | **Central Nervous System.** Handles the Input/Output loop and State Management. |
-| `src/brain.py` | **LLM Interface.** Converts natural language into JSON instructions. |
-| `src/ears.py` | Wake Word detection and Speech-to-Text. |
-| `src/mouth.py` | Text-to-Speech engine. |
-| `src/eyes.py` | OCR and Screen Analysis. |
-| `src/hands.py` | Windows UI Automation (Ghost Clicks). |
-| `src/tools.py` | The toolkit definition (File I/O, Browser, OS interaction). |
-
-## ⚠️ Disclaimer
-**System Zero v3.1 (God Mode)** executes commands immediately.
-If you tell it to "Delete System32", it might actually try. **Use Voice Mode with caution.**
+* **v1.0:** Core Brain & Dispatcher Engine
+* **v1.1:** The Coder (Python execution)
+* **v1.2:** The Researcher (Web scraping & search)
+* **v1.3:** The Hippocampus (JSON Memory)
+* **v1.4:** Blind Actuators (PyAutoGUI keyboard/mouse)
+* **v1.5:** Ghost Hands (UI Automation inspection)
+* **v1.6:** The Oracle (Weather API)
+* **v2.0:** The Audio Cortex (Voice Wake-Word & TTS) (Major Update)
+* **v2.1:** The Maestro (OS Media control)
+* **v2.2:** The Communicator (WhatsApp automation)
+* **v2.3:** Basic Eyes (OCR coordinate clicking)
+* **v2.4:** The Dashboard (Tkinter GUI thread integration)
+* **v2.5:** The Chronos Module (Background alarms)
+* **v3.0:** True Vision (Llama-4-Scout Screen Analysis) (Major Update)
+* **v3.1:** The Sentinel & The Scholar (Hardware Diagnostics & PyPDF2)
