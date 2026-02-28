@@ -21,6 +21,10 @@ from src.memory import SemanticMemory
 GLOBAL_MEMORY = SemanticMemory()
 
 class Toolbox:
+
+    # Dictionary to keep track of background Watcher threads
+    ACTIVE_WATCHERS = {}
+
     @staticmethod
     def get_system_info():
         try:
@@ -567,3 +571,80 @@ class Toolbox:
             return {"error": "PyPDF2 is not installed. Run: pip install PyPDF2"}
         except Exception as e:
             return {"error": f"Failed to read PDF: {e}"}
+    
+    @staticmethod
+    def start_watcher(name, interval_minutes, code_script):
+        """Runs a Python script every X minutes. If it prints 'ALERT:', it speaks."""
+        try:
+            import os
+            import threading
+            import time
+            import subprocess
+            import sys
+            
+            # Setup a dedicated folder for watcher scripts
+            watchers_dir = os.path.join("workspace", "watchers")
+            os.makedirs(watchers_dir, exist_ok=True)
+            
+            script_path = os.path.join(watchers_dir, f"{name}.py")
+            with open(script_path, "w", encoding="utf-8") as f:
+                f.write(code_script)
+
+            # Stop the old watcher if it has the same name
+            if name in Toolbox.ACTIVE_WATCHERS:
+                Toolbox.ACTIVE_WATCHERS[name]["running"] = False 
+            
+            def watcher_loop():
+                print(f"\n>> [WATCHER] 👁️ '{name}' online (Checking every {interval_minutes}m).")
+                while Toolbox.ACTIVE_WATCHERS.get(name, {}).get("running", False):
+                    try:
+                        # Run the script the LLM wrote
+                        result = subprocess.run(
+                            [sys.executable, script_path], 
+                            capture_output=True, text=True, timeout=30
+                        )
+                        output = result.stdout.strip()
+                        
+                        # If the script triggers an alert, interrupt the user!
+                        if "ALERT:" in output:
+                            alert_msg = output.split("ALERT:")[1].strip().split("\n")[0]
+                            print(f"\n>> [WATCHER ALERT] '{name}': {alert_msg}")
+                            
+                            try:
+                                import winsound
+                                winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+                            except: pass
+                            
+                            safe_msg = alert_msg.replace("'", "").replace('"', '')
+                            ps_command = f'powershell -Command "Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak(\'Watcher Alert: {safe_msg}\');"'
+                            os.system(ps_command)
+                            
+                    except Exception as e:
+                        print(f"\n>> [WATCHER ERROR] '{name}' failed: {e}")
+                    
+                    # Sleep until the next check
+                    time.sleep(float(interval_minutes) * 60)
+
+            # Register and start the background thread
+            Toolbox.ACTIVE_WATCHERS[name] = {"running": True}
+            t = threading.Thread(target=watcher_loop, daemon=True)
+            t.start()
+            
+            return {"status": "success", "message": f"Watcher '{name}' started successfully."}
+        except Exception as e:
+            return {"error": f"Failed to start watcher: {e}"}
+
+    @staticmethod
+    def stop_watcher(name):
+        """Terminates a background watcher."""
+        if name in Toolbox.ACTIVE_WATCHERS:
+            Toolbox.ACTIVE_WATCHERS[name]["running"] = False
+            del Toolbox.ACTIVE_WATCHERS[name]
+            return {"status": "success", "message": f"Watcher '{name}' terminated."}
+        return {"error": f"Watcher '{name}' not found."}
+
+    @staticmethod
+    def list_watchers():
+        """Lists all active background tasks."""
+        active = [k for k, v in Toolbox.ACTIVE_WATCHERS.items() if v["running"]]
+        return {"status": "success", "active_watchers": active}

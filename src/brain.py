@@ -22,7 +22,7 @@ class Brain:
             self.client = Groq(api_key=self.api_key)
             
             # We switched from the dead to 'llama-3.3-70b-versatile'
-            self.model = "llama-3.1-8b-instant" 
+            self.model = "llama-3.3-70b-versatile" 
             # -----------------------
             
             self.history = []

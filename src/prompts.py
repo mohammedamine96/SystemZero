@@ -86,6 +86,14 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - read_pdf: {"filename": "report.pdf"}
     -> Extracts and reads all text from a PDF file located in the workspace folder. Use this when the user asks you to read, summarize, analyze, or find specific information inside a PDF document.
 
+[WATCHER - PROACTIVE AUTOMATION]
+- start_watcher: {"name": "bitcoin_tracker", "interval_minutes": 5, "code_script": "import requests\n...\nprint('ALERT: Bitcoin dropped!')"}
+    -> Writes a Python script and runs it silently in the background every X minutes. If the script prints a line containing "ALERT: <message>", the system will speak the message out loud to the user. Use this when the user asks you to monitor, watch, or track something continuously.
+- stop_watcher: {"name": "bitcoin_tracker"}
+    -> Stops an active background watcher.
+- list_watchers: {}
+    -> Lists all currently running watcher threads.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -143,4 +151,9 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 14. **SCHOLAR PROTOCOL:**
     - If the user asks a question about a PDF document, first use `read_pdf` to ingest its contents. Then, analyze the extracted text and use `task_complete` to give the user the exact answer or summary they requested.
+
+15. **WATCHER PROTOCOL:**
+    - When asked to monitor something, use `start_watcher`. Write a short, reliable Python script in the `code_script` parameter that checks the condition. 
+    - The script MUST print a string starting with "ALERT: " if the condition is met (e.g., `print("ALERT: The file was modified")`). 
+    - Do NOT use infinite `while` loops inside the script; the Watcher Engine will automatically run the script on a loop for you.
 """

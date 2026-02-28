@@ -129,6 +129,20 @@ class Dispatcher:
                 if not filename: return {"error": "Missing 'filename' parameter."}
                 return Toolbox.read_pdf(filename)
             
+            # --- WATCHER (PROACTIVE AUTOMATION) ---
+            elif action == "start_watcher":
+                name = params.get("name")
+                interval = params.get("interval_minutes")
+                script = params.get("code_script")
+                if not name or not interval or not script: return {"error": "Missing parameters."}
+                return Toolbox.start_watcher(name, interval, script)
+
+            elif action == "stop_watcher":
+                return Toolbox.stop_watcher(params.get("name"))
+
+            elif action == "list_watchers":
+                return Toolbox.list_watchers()
+            
             # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")
