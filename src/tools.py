@@ -648,3 +648,47 @@ class Toolbox:
         """Lists all active background tasks."""
         active = [k for k, v in Toolbox.ACTIVE_WATCHERS.items() if v["running"]]
         return {"status": "success", "active_watchers": active}
+    
+    @staticmethod
+    def build_new_tool(tool_name, prompt_signature, prompt_description, full_python_code):
+        """Permanently injects a new capability into System Zero's source code."""
+        try:
+            import os
+            
+            print(f">> [ARCHITECT] Splicing new DNA: {tool_name}...")
+            
+            # 1. Inject the code into tools.py
+            tools_path = os.path.join("src", "tools.py")
+            with open(tools_path, "a", encoding="utf-8") as f:
+                f.write(f"\n    # --- DYNAMICALLY BUILT TOOL: {tool_name} ---\n")
+                f.write(full_python_code)
+                f.write("\n")
+
+            # 2. Inject the prompt into prompts.py so he remembers he has it
+            prompts_path = os.path.join("src", "prompts.py")
+            with open(prompts_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # Find the [SYSTEM] tag and insert the new tool documentation right above it
+            new_prompt = f"- {tool_name}: {prompt_signature}\n    -> {prompt_description}\n\n[SYSTEM]"
+            content = content.replace("[SYSTEM]", new_prompt)
+
+            with open(prompts_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            return {
+                "status": "success", 
+                "message": f"Evolved successfully. '{tool_name}' installed. Tell the user to restart the dashboard."
+            }
+        except Exception as e:
+            return {"error": f"Evolution failed: {e}"}
+    # --- DYNAMICALLY BUILT TOOL: generate_password ---
+    @staticmethod
+    def generate_password(length=16):
+        import string
+        import secrets
+        import pyperclip
+        characters = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(secrets.choice(characters) for _ in range(length))
+        pyperclip.copy(password)
+        return {'password': password}

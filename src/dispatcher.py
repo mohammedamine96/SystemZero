@@ -143,7 +143,8 @@ class Dispatcher:
             elif action == "list_watchers":
                 return Toolbox.list_watchers()
             
-            # --- FINISH ---
+            
+           # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")
                 print(f"\n>> [MISSION ACCOMPLISHED]: {summary}")
@@ -153,7 +154,18 @@ class Dispatcher:
                 return {"status": "Aborted by Brain", "reason": command.get("thought")}
 
             else:
-                return {"error": f"Unknown Action: {action}. Execution Blocked."}
+                # --- 🧬 THE ARCHITECT'S DYNAMIC ROUTER 🧬 ---
+                # If the AI wrote a new tool, it won't be in the hardcoded elif blocks above.
+                # We dynamically check if the tool exists in the Toolbox and run it!
+                if hasattr(Toolbox, action):
+                    method = getattr(Toolbox, action)
+                    try:
+                        # Unpack the params dictionary directly into the function arguments
+                        return method(**params)
+                    except Exception as e:
+                        return {"error": f"Dynamic Execution Failed for '{action}': {e}"}
+                else:
+                    return {"error": f"Unknown Action: '{action}'. Execution Blocked."}
 
         except Exception as e:
             return {"error": f"Dispatch Failure: {e}"}

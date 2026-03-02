@@ -94,6 +94,18 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 - list_watchers: {}
     -> Lists all currently running watcher threads.
 
+[THE ARCHITECT - SELF MODIFICATION]
+- build_new_tool: {
+    "tool_name": "zip_folder", 
+    "prompt_signature": '{"folder_path": "workspace/data"}', 
+    "prompt_description": "Compresses a folder into a ZIP file.", 
+    "full_python_code": "    @staticmethod\n    def zip_folder(folder_path):\n        import shutil\n        try:\n            shutil.make_archive(folder_path, 'zip', folder_path)\n            return {'status': 'success'}\n        except Exception as e:\n            return {'error': str(e)}"
+  }
+    -> Writes a brand new Python tool, permanently injecting it into your own source code (tools.py) and memory (prompts.py). Use this ONLY when the user explicitly asks you to "build a new tool", "learn how to", or "create a new capability". Ensure the python code includes the @staticmethod decorator, is indented with 4 spaces to match the class, and takes arguments matching your signature.
+
+- generate_password: {"length": 16}
+    -> Generates a secure password of a specified length, copies it to the clipboard, and returns the password.
+
 [SYSTEM]
 - task_complete: {"summary": "I have printed the document."}
 
@@ -156,4 +168,9 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
     - When asked to monitor something, use `start_watcher`. Write a short, reliable Python script in the `code_script` parameter that checks the condition. 
     - The script MUST print a string starting with "ALERT: " if the condition is met (e.g., `print("ALERT: The file was modified")`). 
     - Do NOT use infinite `while` loops inside the script; the Watcher Engine will automatically run the script on a loop for you.
+
+16. **ARCHITECT PROTOCOL:**
+    - If the user asks you to learn a new skill or build a new tool, use `build_new_tool`. 
+    - You must write pristine, error-handled Python code starting with `@staticmethod`.
+    - Once injected, use `task_complete` to tell the user they MUST restart the dashboard to load your new DNA.
 """
