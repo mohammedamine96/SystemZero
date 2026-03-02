@@ -1,23 +1,17 @@
 import customtkinter as ctk
-import threading
 import sys
-
-# Set dark mode and color theme
-ctk.set_appearance_mode("Dark")
-ctk.set_default_color_theme("blue")
+import queue
 
 class TextRedirector:
-    """Magically catches all print() statements and sends them to the GUI."""
-    def __init__(self, textbox):
-        self.textbox = textbox
+    """Hijacks terminal output and routes it to the GUI text box."""
+    def __init__(self, widget):
+        self.widget = widget
 
-    def write(self, string):
-        # Insert text at the end and auto-scroll down
-        self.textbox.configure(state="normal")
-        self.textbox.insert(ctk.END, string)
-        self.textbox.see(ctk.END)
-        self.textbox.configure(state="disabled")
-
+    def write(self, str):
+        # Insert text at the end and auto-scroll to the bottom
+        self.widget.insert(ctk.END, str)
+        self.widget.see(ctk.END)
+        
     def flush(self):
         pass
 
@@ -25,39 +19,63 @@ class SystemZeroGUI(ctk.CTk):
     def __init__(self, command_queue):
         super().__init__()
         self.command_queue = command_queue
+        
+        # --- WINDOW SETUP ---
+        self.title("System Zero v4.0 - Command Node")
+        self.geometry("900x650")
+        
+        # Force Dark Mode and a Matrix-Green color theme
+        ctk.set_appearance_mode("dark")
+        ctk.set_default_color_theme("green") 
+        
+        # --- HEADER ---
+        self.header = ctk.CTkLabel(
+            self, text="SYSTEM ZERO // NEURAL LINK ESTABLISHED", 
+            font=("Consolas", 18, "bold"), text_color="#00FF41"
+        )
+        self.header.pack(pady=(15, 5))
 
-        # Window Setup
-        self.title("System Zero - Operator Dashboard")
-        self.geometry("800x600")
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
-
-        # 1. Main Terminal Output (The Telemetry Log)
-        self.console = ctk.CTkTextbox(self, font=("Consolas", 14), fg_color="#1e1e1e", text_color="#00ff00")
-        self.console.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="nsew")
-        self.console.configure(state="disabled")
-
-        # Redirect standard output (print) to this text box
+        # --- MATRIX CONSOLE (Event Log) ---
+        # A sleek, borderless text box for the agent's output
+        self.console = ctk.CTkTextbox(
+            self, width=860, height=500, 
+            font=("Consolas", 14), text_color="#00FF41", fg_color="#0D0D0D", 
+            border_width=1, border_color="#008F11"
+        )
+        self.console.pack(pady=10, padx=20)
+        
+        # Route all terminal print() statements directly to this console!
         sys.stdout = TextRedirector(self.console)
-
-        # 2. Bottom Input Area
+        
+        # --- INPUT ROW ---
         self.input_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.input_frame.grid(row=1, column=0, padx=20, pady=(0, 20), sticky="ew")
-        self.input_frame.grid_columnconfigure(0, weight=1)
+        self.input_frame.pack(fill=ctk.X, padx=20, pady=5)
+        
+        self.entry = ctk.CTkEntry(
+            self.input_frame, width=700, height=40, 
+            font=("Consolas", 14), placeholder_text="Enter command or type 'voice' to activate audio sensors..."
+        )
+        self.entry.pack(side=ctk.LEFT, padx=(0, 10))
+        self.entry.bind("<Return>", self.send_command) # Pressing Enter sends command
+        
+        self.send_btn = ctk.CTkButton(
+            self.input_frame, text="EXECUTE", width=140, height=40,
+            font=("Consolas", 14, "bold"), fg_color="#008F11", hover_color="#00FF41",
+            command=self.send_command
+        )
+        self.send_btn.pack(side=ctk.LEFT)
 
-        self.input_box = ctk.CTkEntry(self.input_frame, placeholder_text="Type command or 'y' to confirm...", font=("Consolas", 14))
-        self.input_box.grid(row=0, column=0, padx=(0, 10), sticky="ew")
-        # Allow hitting Enter to send
-        self.input_box.bind("<Return>", self._on_send)
+        # Handle window close gracefully
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-        self.send_btn = ctk.CTkButton(self.input_frame, text="SEND", font=("Consolas", 14, "bold"), command=self._on_send)
-        self.send_btn.grid(row=0, column=1)
+    def send_command(self, event=None):
+        cmd = self.entry.get()
+        if cmd.strip():
+            print(f"\n[OPERATOR]: {cmd}")
+            self.command_queue.put(cmd)
+            self.entry.delete(0, ctk.END)
 
-    def _on_send(self, event=None):
-        """Triggers when you click SEND or press Enter."""
-        text = self.input_box.get()
-        if text.strip():
-            # Send the text to the background agent thread
-            self.command_queue.put(text)
-            self.input_box.delete(0, ctk.END) # Clear the box
-            print(f"\n[USER]: {text}")
+    def on_close(self):
+        print(">> [SYSTEM] Shutting down Neural Node...")
+        self.destroy()
+        sys.exit(0)
