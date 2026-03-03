@@ -8,22 +8,20 @@ from src.prompts import SYSTEM_INSTRUCTION
 load_dotenv()
 
 class Brain:
-    def __init__(self):
-        print(">> [BRAIN] Connecting to Groq Cloud (Llama 3.3)...")
+    # Change the definition to accept a model, defaulting to the big one
+    def __init__(self, model="llama-3.3-70b-versatile"):
+        print(f">> [BRAIN] Connecting to Groq Cloud ({model})...")
         try:
             self.api_key = os.getenv("GROQ_API_KEY")
             
             if not self.api_key:
-                # If .env fails, check if the user pasted it directly
-                # (Safety fallback)
                 print(">> [WARNING] GROQ_API_KEY not found in .env")
                 self.api_key = input("Enter Groq API Key: ").strip()
 
             self.client = Groq(api_key=self.api_key)
             
-            # We switched from the dead to 'llama-3.3-70b-versatile'
-            self.model = "llama-3.3-70b-versatile" 
-            # -----------------------
+            # Use the model passed in the argument!
+            self.model = model 
             
             self.history = []
             

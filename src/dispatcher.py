@@ -154,6 +154,12 @@ class Dispatcher:
                 if not problem or not solution: return {"error": "Missing problem or solution parameters."}
                 return Toolbox.record_lesson(problem, solution)
             
+            elif action == "delegate_task":
+                role = params.get("role")
+                task = params.get("task_description")
+                if not role or not task: return {"error": "Missing role or task description."}
+                return Toolbox.delegate_task(role, task)
+            
            # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

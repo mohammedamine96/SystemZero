@@ -11,7 +11,9 @@ import json
 import webbrowser
 import urllib.parse
 import time
-import threading
+import A
+
+time.sleep(3)
 
 GLOBAL_HANDS = Hands()
 # Global instance so we don't reload the model every time
@@ -577,7 +579,6 @@ class Toolbox:
         """Runs a Python script every X minutes. If it prints 'ALERT:', it speaks."""
         try:
             import os
-            import threading
             import time
             import subprocess
             import sys
@@ -733,3 +734,54 @@ class Toolbox:
                 return {"error": "Failed to embed lesson."}
         except Exception as e:
             return {"error": f"Reflection Error: {e}"}
+        
+    @staticmethod
+    def delegate_task(role, task_description):
+        """Spawns an autonomous sub-agent in a background thread to handle a complex task."""
+        try:
+            import threading
+            
+            def swarm_worker():
+                print(f"\n>> [HIVE MIND] 🐝 Spawning Sub-Agent: {role}...")
+                
+                # Import the Brain to create a clone
+                from src.brain import Brain
+                from src.parser import Parser
+                from src.dispatcher import Dispatcher
+                
+                worker_brain = Brain(model="llama-3.1-8b-instant")
+                
+                # Give the child a hyper-focused prompt
+                focus_prompt = f"You are a Sub-Agent of System Zero. Your role is: {role}. Your sole objective is: {task_description}. Use your tools to accomplish this. When finished, use the 'archive_memory' tool to permanently save your final report/findings so the Master Brain can read it later. Then use 'task_complete'."
+                
+                current_input = focus_prompt
+                error_count = 0
+                
+                while True:
+                    raw_response = worker_brain.think(current_input)
+                    command = Parser.extract_command(raw_response)
+                    
+                    if "error" in command:
+                        error_count += 1
+                        if error_count > 2:
+                            print(f">> [HIVE MIND] 🐝 Sub-Agent '{role}' failed and terminated.")
+                            break
+                    else:
+                        error_count = 0
+                        
+                    result = Dispatcher.execute(command)
+                    
+                    if result.get("status") == "task_complete":
+                        print(f"\n>> [HIVE MIND] 🐝 Sub-Agent '{role}' completed its objective and assimilated data into the Hive.")
+                        break
+                        
+                    current_input = f"SYSTEM FEEDBACK: Last action resulted in: {result}. Continue your objective."
+
+            # Start the child agent in the background so it doesn't block the Master Brain!
+            t = threading.Thread(target=swarm_worker, daemon=True)
+            t.start()
+            
+            return {"status": "success", "message": f"Sub-Agent '{role}' dispatched. It will work in the background and archive its findings in memory."}
+            
+        except Exception as e:
+            return {"error": f"Failed to spawn swarm agent: {e}"}
