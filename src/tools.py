@@ -715,3 +715,21 @@ class Toolbox:
                 return {"error": f"Transmission Failed: {response.text}"}
         except Exception as e:
             return {"error": f"Mobile Uplink Error: {e}"}
+        
+    @staticmethod
+    def record_lesson(problem_context, solution_learned):
+        """Archives a learned lesson into the vector database to prevent future mistakes."""
+        try:
+            # We format this specifically so the semantic search easily catches it next time
+            lesson_fact = f"LESSON LEARNED: When attempting to '{problem_context}', the correct approach is to: '{solution_learned}'. Do not repeat past failures."
+            
+            # Send it directly to the Hippocampus
+            result = GLOBAL_MEMORY.memorize(lesson_fact)
+            
+            if result.get("status") == "success":
+                print(f">> [NEURAL FEEDBACK] New synaptic pathway formed: {problem_context}")
+                return {"status": "success", "message": "Lesson permanently embedded in neural memory."}
+            else:
+                return {"error": "Failed to embed lesson."}
+        except Exception as e:
+            return {"error": f"Reflection Error: {e}"}

@@ -148,6 +148,12 @@ class Dispatcher:
                 if not msg: return {"error": "Missing 'message' parameter."}
                 return Toolbox.send_mobile_alert(msg)
             
+            elif action == "record_lesson":
+                problem = params.get("problem_context")
+                solution = params.get("solution_learned")
+                if not problem or not solution: return {"error": "Missing problem or solution parameters."}
+                return Toolbox.record_lesson(problem, solution)
+            
            # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")
