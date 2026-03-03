@@ -143,6 +143,10 @@ class Dispatcher:
             elif action == "list_watchers":
                 return Toolbox.list_watchers()
             
+            elif action == "send_mobile_alert":
+                msg = params.get("message")
+                if not msg: return {"error": "Missing 'message' parameter."}
+                return Toolbox.send_mobile_alert(msg)
             
            # --- FINISH ---
             elif action == "task_complete":

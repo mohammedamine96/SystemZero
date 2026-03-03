@@ -63,6 +63,8 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 [COMMUNICATOR - MESSAGING]
 - send_whatsapp: {"phone_number": "+1234567890", "message": "I will be 10 minutes late!"}
     -> Opens WhatsApp Web, types, and sends a message automatically. You MUST format the phone number with the country code (+). Use this when the user asks to text or WhatsApp someone.
+- send_mobile_alert: {"message": "The file has been downloaded."}
+    -> Sends a secure push notification/text directly to the Operator's mobile phone. Use this WHENEVER a command is prefixed with [MOBILE UPLINK FROM OPERATOR], or when you are explicitly asked to send an alert to the user's phone.
 
 [CHRONOS - TIME & ALARMS]
 - set_reminder: {"minutes": 20, "message": "check the oven"}

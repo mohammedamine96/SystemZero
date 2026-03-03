@@ -11,7 +11,8 @@ from src.dispatcher import Dispatcher
 from src.tools import Toolbox
 from src.ears import Ears
 from src.mouth import Mouth
-from src.gui import SystemZeroGUI  # <--- NEW IMPORT
+from src.gui import SystemZeroGUI  
+from src.uplink import RemoteTether
 
 class SystemZero:
     def __init__(self, command_queue):
@@ -222,16 +223,18 @@ if __name__ == "__main__":
     # 1. Create the communication queue
     cmd_queue = queue.Queue()
     
-    # 2. Initialize the GUI (Main Thread)
+    # 2. Establish Mobile Uplink (Runs in background)
+    tether = RemoteTether(cmd_queue)  # <--- NEW LINE
+    
+    # 3. Initialize the GUI (Main Thread)
     app = SystemZeroGUI(cmd_queue)
     
-    # 3. Initialize the Agent (Pass the queue to it)
+    # 4. Initialize the Agent (Pass the queue to it)
     agent = SystemZero(cmd_queue)
     
-    # 4. Start the Agent in a Background Thread
-    # daemon=True means the thread will die when you close the GUI window
+    # 5. Start the Agent in a Background Thread
     agent_thread = threading.Thread(target=agent.run, daemon=True)
     agent_thread.start()
     
-    # 5. Start the UI Loop (Blocks the main thread, keeping window open)
+    # 6. Start the UI Loop (Blocks the main thread)
     app.mainloop()

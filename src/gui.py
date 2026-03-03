@@ -3,13 +3,17 @@ import sys
 import queue
 
 class TextRedirector:
-    """Hijacks terminal output and routes it to the GUI text box."""
+    """Hijacks terminal output and routes it safely to the GUI text box from any thread."""
     def __init__(self, widget):
         self.widget = widget
 
-    def write(self, str):
+    def write(self, text):
+        # Schedule the UI update safely on the main thread
+        self.widget.after(0, self._insert_text, text)
+        
+    def _insert_text(self, text):
         # Insert text at the end and auto-scroll to the bottom
-        self.widget.insert(ctk.END, str)
+        self.widget.insert(ctk.END, text)
         self.widget.see(ctk.END)
         
     def flush(self):

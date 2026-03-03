@@ -682,7 +682,7 @@ class Toolbox:
             }
         except Exception as e:
             return {"error": f"Evolution failed: {e}"}
-    # --- DYNAMICALLY BUILT TOOL: generate_password ---
+
     @staticmethod
     def generate_password(length=16):
         import string
@@ -692,3 +692,26 @@ class Toolbox:
         password = ''.join(secrets.choice(characters) for _ in range(length))
         pyperclip.copy(password)
         return {'password': password}
+    
+    @staticmethod
+    def send_mobile_alert(message):
+        """Sends a secure Telegram message to the Operator's phone."""
+        try:
+            import os
+            import requests
+            token = os.getenv("TELEGRAM_BOT_TOKEN")
+            chat_id = os.getenv("TELEGRAM_CHAT_ID")
+            
+            if not token or not chat_id:
+                return {"error": "Telegram credentials missing in .env."}
+            
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+            payload = {"chat_id": chat_id, "text": message}
+            response = requests.post(url, json=payload)
+            
+            if response.status_code == 200:
+                return {"status": "success", "message": "Mobile alert transmitted."}
+            else:
+                return {"error": f"Transmission Failed: {response.text}"}
+        except Exception as e:
+            return {"error": f"Mobile Uplink Error: {e}"}
