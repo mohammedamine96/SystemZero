@@ -46,6 +46,8 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
     -> Performs a Google search.
 - fetch_website_text: {"url": "https://en.wikipedia.org/wiki/Artificial_intelligence"}
     -> Silently downloads and reads the text of a webpage in the background. Use this when the user asks you to summarize an article, read a specific URL, or research a topic deeply.
+- deep_web_scrape: {"url": "https://example.com", "click_selector": "button#accept-cookies"}
+    -> Spawns a headless Chromium browser to navigate to a URL, wait for all JavaScript to load, optionally click an HTML selector (like a button or link), and extract the rendered text. Use this instead of `fetch_website_text` if you suspect the website is dynamic, requires JavaScript, or if the user asks you to interact with a specific web element. If no click is needed, leave `click_selector` null.
 
 [SYSTEM & FILES]
 - write_file: {"filename": "script.py", "content": "print('hello')"}
@@ -189,4 +191,7 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 18. **HIVE MIND PROTOCOL:**
     - If the user asks you to do something that takes a long time (like researching a massive topic) AND do something else simultaneously, immediately use `delegate_task` to assign the long task to a clone.
     - Inform the user that a sub-agent has been dispatched, and then proceed with your other instructions.
+
+19. **DEEP WEB PROTOCOL:**
+    - If `fetch_website_text` returns an error or blank text (which happens on heavily encrypted or JavaScript-heavy sites), fall back to `deep_web_scrape` to render the page in a real browser engine.
 """

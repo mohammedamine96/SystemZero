@@ -11,7 +11,6 @@ import json
 import webbrowser
 import urllib.parse
 import time
-import A
 
 time.sleep(3)
 
@@ -785,3 +784,43 @@ class Toolbox:
             
         except Exception as e:
             return {"error": f"Failed to spawn swarm agent: {e}"}
+        
+    @staticmethod
+    def deep_web_scrape(url, click_selector=None):
+        """Uses a headless Chromium browser to render JavaScript and interact with dynamic webpages."""
+        try:
+            from playwright.sync_api import sync_playwright
+            
+            print(f">> [PUPPETEER] Spinning up headless Chromium engine for {url}...")
+            
+            with sync_playwright() as p:
+                # Launch headless browser
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                
+                # Go to the URL and wait for the network to be mostly idle (JS loaded)
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                
+                # If the Brain decided it needs to click a button (like "Accept Cookies" or "Read More")
+                if click_selector:
+                    try:
+                        print(f">> [PUPPETEER] Attempting to click selector: {click_selector}")
+                        page.click(click_selector, timeout=5000)
+                        page.wait_for_timeout(2000) # Wait 2 seconds for the click to trigger JS changes
+                    except Exception as e:
+                        print(f">> [PUPPETEER WARNING] Could not click '{click_selector}': {e}")
+                
+                # Extract the rendered, visible text directly from the browser DOM
+                rendered_text = page.evaluate("document.body.innerText")
+                browser.close()
+                
+                # Truncate to protect the Llama context window
+                max_chars = 8000
+                if len(rendered_text) > max_chars:
+                    rendered_text = rendered_text[:max_chars] + "... [TEXT TRUNCATED DUE TO LENGTH]"
+                    
+                print(">> [PUPPETEER] Dynamic extraction complete.")
+                return {"status": "success", "url": url, "content": rendered_text}
+                
+        except Exception as e:
+            return {"error": f"Puppeteer extraction failed: {e}"}

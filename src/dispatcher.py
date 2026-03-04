@@ -160,6 +160,12 @@ class Dispatcher:
                 if not role or not task: return {"error": "Missing role or task description."}
                 return Toolbox.delegate_task(role, task)
             
+            elif action == "deep_web_scrape":
+                url = params.get("url")
+                selector = params.get("click_selector")
+                if not url: return {"error": "Missing 'url' parameter."}
+                return Toolbox.deep_web_scrape(url, selector)
+            
            # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")
