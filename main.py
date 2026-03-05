@@ -16,67 +16,25 @@ from src.uplink import RemoteTether
 
 class SystemZero:
     def __init__(self, command_queue):
-        self.command_queue = command_queue # Connects to the GUI input
+        self.command_queue = command_queue 
         print(">> System Zero: Initializing modules...")
         self.brain = Brain()
-        self.ears = Ears()
+        self.ears = Ears(self.command_queue)
         self.mouth = Mouth()
         print(">> System Zero: Online (Autonomy Enabled).")
 
-    def wait_for_text_input(self, prompt=""):
-        """Replaces standard input(). Waits for the GUI queue."""
+    def wait_for_input(self, prompt=""):
+        """Waits for input from the GUI, Telegram, or Voice."""
         if prompt:
             print(prompt, end="")
-        # This blocks the background thread until the user clicks "SEND" on the GUI
         return self.command_queue.get()
 
     def run(self):
-        input_mode = "text"
-        active_session = False 
-
         while True:
             try:
-                user_input = None
+                # This seamlessly waits for text, voice, or mobile commands!
+                user_input = self.wait_for_input()
                 
-                # --- INPUT HANDLING ---
-                if input_mode == "text":
-                    # Wait for text from the GUI instead of the terminal
-                    user_input = self.wait_for_text_input()
-                    
-                    if user_input.lower().strip() == "voice":
-                        input_mode = "voice"
-                        print("\n>> [SYSTEM] Switched to VOICE MODE.")
-                        continue
-
-                elif input_mode == "voice":
-                    # STATE 1: ASLEEP (Waiting for "Start")
-                    if not active_session:
-                        if self.ears.wait_for_wake_word("zero"): # Using 'zero' based on your latest log
-                            active_session = True
-                            self.mouth.speak("I am listening.", wait=True)
-                        else:
-                            continue 
-
-                    # STATE 2: AWAKE (Continuous Listening)
-                    if active_session:
-                        # Listen for command
-                        user_input = self.ears.listen()
-                        
-                        if not user_input:
-                            continue
-
-                        # Commands to sleep/exit voice mode
-                        if "sleep" in user_input.lower() or "stop listening" in user_input.lower():
-                            active_session = False
-                            self.mouth.speak("Going to sleep.", wait=True)
-                            continue
-
-                        if "switch to text" in user_input.lower():
-                            input_mode = "text"
-                            active_session = False
-                            self.mouth.speak("Switching to text mode.", wait=True)
-                            continue
-
                 if not user_input:
                     continue
                 
@@ -85,16 +43,16 @@ class SystemZero:
                     break
 
                 # --- EXECUTION ---
-                self.process_task(user_input, input_mode)
+                self.process_task(user_input)
 
             except Exception as e:
                 print(f"\n[CRITICAL ERROR] {e}")
                 break
 
-    def process_task(self, initial_input, input_mode="text"):
+    def process_task(self, initial_input):
         current_input = initial_input
         error_count = 0
-        is_first_thought = True  # <--- Tracks if this is the first action
+        is_first_thought = True  
         
         while True:
             # (Standard image logic)
@@ -108,7 +66,6 @@ class SystemZero:
             raw_response = self.brain.think(current_input, image_path=image_attachment)
             command = Parser.extract_command(raw_response)
             
-            # Default Trust
             trust_session = True
             
             # --- 🛡️ THE SECURITY FILTER 🛡️ ---
@@ -118,13 +75,10 @@ class SystemZero:
             
             combined_context = (str(thought_text) + " " + action_name + " " + params_str).lower()
             
-            # Use Regex \b to ensure we only match WHOLE words. 
-            # This prevents "information" from triggering "format".
             dangerous_pattern = r"\b(delete|remove|format|erase|uninstall|rmdir|drop)\b"
             is_dangerous = bool(re.search(dangerous_pattern, combined_context))
 
             if is_dangerous:
-                # REVOKE TRUST! Force the user to confirm.
                 trust_session = False
                 print("\n>> [SECURITY ALERT] Destructive intent detected!")
                 self.mouth.speak("Warning. Destructive action detected. I need your explicit permission to proceed.", wait=True)
@@ -134,16 +88,11 @@ class SystemZero:
                 print(f"[PLAN] Reason: {thought_text}")
                 
                 if is_dangerous:
-                    # Always speak the plan if it's dangerous so you know what you are approving
                     self.mouth.speak(f"The plan is: {thought_text}", wait=True)
                 elif is_first_thought:
-                    # Speak ONLY the first thought
                     self.mouth.speak(thought_text, wait=True)
-                    is_first_thought = False  # Turn off the mouth for the next loops
-                else:
-                    # Stay silent for intermediate steps
-                    pass 
-
+                    is_first_thought = False  
+            
             # (Error Loop Protection)
             if "error" in command and "Complete" not in command.get('thought', ''):
                 error_count += 1
@@ -158,46 +107,17 @@ class SystemZero:
             
             # --- 🛑 AUTHORIZATION GATE ---
             if not trust_session:
-                if input_mode == "text":
-                    confirm = self.wait_for_text_input(">> Execute? (y / n / stop): ")
-                    if confirm.lower() == 'y' or confirm.lower() == 'y!':
-                        trust_session = True
-                    elif confirm.lower() in ['stop', 'n']:
-                        print(">> [SYSTEM] Action aborted by Operator.")
-                        break
+                # You can now authorize by typing "yes" OR saying "Zero, yes"!
+                confirm = self.wait_for_input("\n>> Execute? (Type 'y' or say 'Zero, yes'): ").lower()
                 
-                elif input_mode == "voice":
-                    print(">> [WAITING FOR OVERRIDE] Say 'Yes', 'Go', or 'Stop'...")
-                    time.sleep(0.5) 
-                    
-                    attempts = 0
-                    authorized = False
-                    
-                    while attempts < 3:
-                        approval = self.ears.listen()
-                        if approval:
-                            print(f">> [HEARD]: '{approval}'")
-                            approval = approval.lower()
-                            if any(word in approval for word in ["yes", "yeah", "go", "proceed", "ok", "do it", "confirm"]):
-                                authorized = True
-                                trust_session = True
-                                self.mouth.speak("Override accepted. Executing.", wait=True)
-                                break
-                            elif any(word in approval for word in ["stop", "no", "wait", "cancel", "abort"]):
-                                self.mouth.speak("Action aborted.", wait=True)
-                                return 
-                            else:
-                                print(">> [SYSTEM] Invalid confirmation. Say 'Yes' or 'No'.")
-                                attempts += 1
-                        else:
-                            print(">> [SILENCE] I didn't hear you. Listening again...")
-                            attempts += 1
-                    
-                    if not authorized:
-                        print(">> [TIMEOUT] Authorization failed.")
-                        self.mouth.speak("Authorization timeout. Aborting.", wait=True)
-                        break
-
+                if any(word in confirm for word in ['y', 'yes', 'go', 'do it', 'confirm']):
+                    trust_session = True
+                    self.mouth.speak("Override accepted. Executing.", wait=True)
+                else:
+                    print(">> [SYSTEM] Action aborted by Operator.")
+                    self.mouth.speak("Action aborted.", wait=True)
+                    break
+            
             # (Execution)
             if trust_session:
                 time.sleep(0.2) 
@@ -205,36 +125,22 @@ class SystemZero:
             result = Dispatcher.execute(command)
             print(f"\n[RESULT]:\n{json.dumps(result, indent=2)}")
             
-            # --- 🏁 TASK COMPLETE LOGIC (FIXED) ---
+            # --- 🏁 TASK COMPLETE LOGIC ---
             if result.get("status") == "task_complete":
-                # Extract the final message from the Dispatcher's output
                 summary = result.get("message", "Task completed.")
-                # The agent speaks its final summary here!
                 self.mouth.speak(summary, wait=True)
                 break
 
-            # --- PERSISTENT MEMORY ---
-            # We must constantly remind the Brain of the ORIGINAL goal, 
-            # otherwise it forgets the specifics (like the exact time) after a few steps!
             current_input = f"ORIGINAL GOAL: {initial_input}\nSYSTEM FEEDBACK: Last action resulted in: {json.dumps(result)}. What is the next step?"
             
 # --- BOOT SEQUENCE ---
 if __name__ == "__main__":
-    # 1. Create the communication queue
     cmd_queue = queue.Queue()
-    
-    # 2. Establish Mobile Uplink (Runs in background)
-    tether = RemoteTether(cmd_queue)  # <--- NEW LINE
-    
-    # 3. Initialize the GUI (Main Thread)
+    tether = RemoteTether(cmd_queue)  
     app = SystemZeroGUI(cmd_queue)
-    
-    # 4. Initialize the Agent (Pass the queue to it)
     agent = SystemZero(cmd_queue)
     
-    # 5. Start the Agent in a Background Thread
     agent_thread = threading.Thread(target=agent.run, daemon=True)
     agent_thread.start()
     
-    # 6. Start the UI Loop (Blocks the main thread)
     app.mainloop()
