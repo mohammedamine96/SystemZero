@@ -32,7 +32,6 @@ class SystemZero:
     def run(self):
         while True:
             try:
-                # This seamlessly waits for text, voice, or mobile commands!
                 user_input = self.wait_for_input()
                 
                 if not user_input:
@@ -43,7 +42,11 @@ class SystemZero:
                     break
 
                 # --- EXECUTION ---
+                self.ears.is_busy = True   # <--- TURN ON MUTE SWITCH
+                
                 self.process_task(user_input)
+                
+                self.ears.is_busy = False  # <--- TURN OFF MUTE SWITCH (Listen for follow-up!)
 
             except Exception as e:
                 print(f"\n[CRITICAL ERROR] {e}")
