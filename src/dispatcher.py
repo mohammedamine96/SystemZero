@@ -166,6 +166,9 @@ class Dispatcher:
                 if not url: return {"error": "Missing 'url' parameter."}
                 return Toolbox.deep_web_scrape(url, selector)
             
+            elif action == "capture_webcam":
+                return Toolbox.capture_webcam()
+            
            # --- FINISH ---
             elif action == "task_complete":
                 summary = params.get("summary", "Task Completed.")

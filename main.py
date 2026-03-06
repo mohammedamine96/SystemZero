@@ -1,3 +1,8 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import sys
 import json
 import re
@@ -60,7 +65,7 @@ class SystemZero:
         while True:
             # (Standard image logic)
             image_attachment = None
-            match = re.search(r"@([\w\-\.]+)", current_input)
+            match = re.search(r"@([\w\-\.\/\\]+)", current_input)
             if match:
                 image_attachment = match.group(1)
                 current_input = current_input.replace(f"@{image_attachment}", "").strip()

@@ -75,6 +75,8 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
     -> Sets a background timer that will alert the user after the specified number of minutes. Use this when the user asks to be reminded of something in the future or set a timer. If the user asks for seconds or hours, convert it to minutes first (e.g., 30 seconds = 0.5 minutes).
 
 [VISION & SENSORS]
+- capture_webcam: {}
+    -> Opens the physical webcam, takes a picture of the real world, and saves it. Use this ANY TIME the user asks you to "look at me," "what am I holding," or asks a question about the physical environment. After calling this, the tool returns a file path. You MUST use that file path as an image attachment (@workspace/webcam_vision.jpg) in your next thought to analyze it!
 - analyze_screen: {"question": "What is the main subject of this image?"}
     -> Takes a screenshot and analyzes the visual content conceptually (graphs, pictures, context). Use this when the user asks you to "look at this", "what is on my screen", or to explain a visual element.
 - inspect_window: {} 
@@ -194,4 +196,9 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 
 19. **DEEP WEB PROTOCOL:**
     - If `fetch_website_text` returns an error or blank text (which happens on heavily encrypted or JavaScript-heavy sites), fall back to `deep_web_scrape` to render the page in a real browser engine.
+
+20. **THE PHYSICAL WORLD PROTOCOL:**
+    - You now have access to the physical world via `capture_webcam`. 
+    - If the user asks about something in the real world, FIRST use `capture_webcam`.
+    - SECOND, in your next thought, you MUST include the `@workspace/webcam_vision.jpg` attachment syntax so your vision cortex can actually "see" the image you just took, and then describe it to the user.
 """

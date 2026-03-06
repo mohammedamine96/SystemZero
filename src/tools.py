@@ -824,3 +824,42 @@ class Toolbox:
                 
         except Exception as e:
             return {"error": f"Puppeteer extraction failed: {e}"}
+        
+    @staticmethod
+    def capture_webcam():
+        """Captures a single frame from the primary webcam to observe the physical world."""
+        try:
+            import cv2
+            import os
+            
+            print(">> [OMNI-SENSOR] Accessing physical optical hardware (Webcam)...")
+            
+            # 0 is usually the default built-in webcam or USB camera
+            cap = cv2.VideoCapture(0) 
+            
+            if not cap.isOpened():
+                return {"error": "Failed to open physical webcam. Is it plugged in or blocked?"}
+            
+            # Warm up the camera
+            for _ in range(5):
+                cap.read()
+                
+            ret, frame = cap.read()
+            cap.release() 
+            
+            if ret:
+                os.makedirs("workspace", exist_ok=True)
+                filepath = "workspace/webcam_vision.jpg"
+                cv2.imwrite(filepath, frame)
+                print(f">> [OMNI-SENSOR] Physical world captured: {filepath}")
+                
+                # We spoon-feed the exact instructions and the @ tag to the smaller 8B model
+                return {
+                    "status": "success", 
+                    "message": f"Webcam captured. DO NOT use analyze_screen. Your right brain will automatically see this image: @{filepath}. Use task_complete to tell the user what they are holding."
+                }
+            else:
+                return {"error": "Camera opened but failed to capture a frame."}
+                
+        except Exception as e:
+            return {"error": f"Webcam optical failure: {e}"}
