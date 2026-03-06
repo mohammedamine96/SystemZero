@@ -175,11 +175,12 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
 14. **SCHOLAR PROTOCOL:**
     - If the user asks a question about a PDF document, first use `read_pdf` to ingest its contents. Then, analyze the extracted text and use `task_complete` to give the user the exact answer or summary they requested.
 
-15. **WATCHER PROTOCOL:**
+15.15. **WATCHER PROTOCOL:**
     - When asked to monitor something, use `start_watcher`. Write a short, reliable Python script in the `code_script` parameter that checks the condition. 
     - The script MUST print a string starting with "ALERT: " if the condition is met (e.g., `print("ALERT: The file was modified")`). 
     - Do NOT use infinite `while` loops inside the script; the Watcher Engine will automatically run the script on a loop for you.
-
+    - CRITICAL: When the user asks you to stop a watcher, DO NOT GUESS THE NAME. You MUST use `list_watchers` first to get the exact running name, and then use `stop_watcher`.
+    
 16. **ARCHITECT PROTOCOL:**
     - If the user asks you to learn a new skill or build a new tool, use `build_new_tool`. 
     - You must write pristine, error-handled Python code starting with `@staticmethod`.

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Brain:
-    def __init__(self, model="llama-3.1-8b-instant"):
+    def __init__(self, model="llama-3.3-70b-versatile"):
         print(f">> [BRAIN] Connecting Left Hemisphere to Groq ({model})...")
         try:
             # 1. Initialize Left Brain (Groq)
