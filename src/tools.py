@@ -652,12 +652,25 @@ class Toolbox:
     
     @staticmethod
     def build_new_tool(tool_name, prompt_signature, prompt_description, full_python_code):
-        """Permanently injects a new capability into System Zero's source code."""
+        """Permanently injects a new capability into System Zero's source code with strict AST linting."""
+        import os
+        import ast
+        
+        print(f">> [ARCHITECT] Splicing new DNA: {tool_name}...")
+        
+        # --- v6.0 SAFETY LINTER ---
         try:
-            import os
+            # Statically parse the code to ensure it won't brick the interpreter
+            ast.parse(full_python_code)
+        except SyntaxError as e:
+            print(f">> [ARCHITECT FATAL] Syntax Error detected in new DNA: {e}")
+            return {"error": f"v6.0 Linter Blocked Injection: Syntax error in generated code -> {e}"}
             
-            print(f">> [ARCHITECT] Splicing new DNA: {tool_name}...")
+        # Enforce Architect Protocol constraints
+        if "@staticmethod" not in full_python_code:
+            return {"error": "v6.0 Linter Blocked Injection: The required @staticmethod decorator is missing."}
             
+        try:
             # 1. Inject the code into tools.py
             tools_path = os.path.join("src", "tools.py")
             with open(tools_path, "a", encoding="utf-8") as f:
@@ -665,7 +678,7 @@ class Toolbox:
                 f.write(full_python_code)
                 f.write("\n")
 
-            # 2. Inject the prompt into prompts.py so he remembers he has it
+            # 2. Inject the prompt into prompts.py so zero remembers the capability
             prompts_path = os.path.join("src", "prompts.py")
             with open(prompts_path, "r", encoding="utf-8") as f:
                 content = f.read()
@@ -679,10 +692,10 @@ class Toolbox:
 
             return {
                 "status": "success", 
-                "message": f"Evolved successfully. '{tool_name}' installed. Tell the user to restart the dashboard."
+                "message": f"Sovereign evolution successful. '{tool_name}' installed. Inform the operator to restart the dashboard."
             }
         except Exception as e:
-            return {"error": f"Evolution failed: {e}"}
+            return {"error": f"Evolution failed during file modification: {e}"}
 
     @staticmethod
     def generate_password(length=16):
