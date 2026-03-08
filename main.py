@@ -18,6 +18,7 @@ from src.ears import Ears
 from src.mouth import Mouth
 from src.gui import SystemZeroGUI  
 from src.uplink import RemoteTether
+from src.security import SemanticSecurityFilter
 
 class SystemZero:
     def __init__(self, command_queue):
@@ -26,6 +27,7 @@ class SystemZero:
         self.brain = Brain()
         self.ears = Ears(self.command_queue)
         self.mouth = Mouth()
+        self.security = SemanticSecurityFilter() 
         print(">> System Zero: Online (Autonomy Enabled).")
 
     def wait_for_input(self, prompt=""):
@@ -76,19 +78,17 @@ class SystemZero:
             
             trust_session = True
             
-            # --- 🛡️ THE SECURITY FILTER 🛡️ ---
+            # --- 🛡️ THE SECURITY FILTER (SEMANTIC UPGRADE) 🛡️ ---
             thought_text = command.get('thought', '')
             action_name = command.get('action', '')
             params_str = str(command.get('params', {}))
             
-            combined_context = (str(thought_text) + " " + action_name + " " + params_str).lower()
-            
-            dangerous_pattern = r"\b(delete|remove|format|erase|uninstall|rmdir|drop)\b"
-            is_dangerous = bool(re.search(dangerous_pattern, combined_context))
+            # Evaluate true intent mathematically
+            is_dangerous = self.security.is_destructive(thought_text, action_name, params_str)
 
             if is_dangerous:
                 trust_session = False
-                print("\n>> [SECURITY ALERT] Destructive intent detected!")
+                print("\n>> [SECURITY ALERT] Destructive semantic intent detected!")
                 self.mouth.speak("Warning. Destructive action detected. I need your explicit permission to proceed.", wait=True)
             
             # --- 🗣️ THE MOUTH LOGIC (QUIET MODE) ---
