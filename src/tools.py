@@ -357,31 +357,67 @@ class Toolbox:
         
     @staticmethod
     def send_whatsapp(phone_number, message):
-        """Automates WhatsApp Web to send a message."""
+        """Automates WhatsApp Web using Spatially-Filtered Optical DOM Verification."""
         try:
-            # Clean the phone number (remove spaces, ensure it has the + country code)
+            import urllib.parse
+            import webbrowser
+            import pyautogui
+            import time
+
             clean_number = phone_number.replace(" ", "")
             if not clean_number.startswith("+"):
-                return {"error": "Phone number must include the country code (e.g., +1234567890)."}
+                return {"error": "Phone number must include the country code."}
 
-            # Safely encode the message for a URL
             encoded_msg = urllib.parse.quote(message)
             url = f"https://web.whatsapp.com/send?phone={clean_number}&text={encoded_msg}"
             
             print(f">> [COMMUNICATOR] Opening WhatsApp Web for {clean_number}...")
-            import webbrowser
-            import pyautogui
-            
             webbrowser.open(url)
             
-            # Wait for WhatsApp Web to load (Increase this to 15-20 if your PC/Internet is slow)
-            time.sleep(12) 
+            print(">> [COMMUNICATOR] Awaiting browser window...")
+            window_found = False
+            for _ in range(15):
+                time.sleep(1)
+                window = GLOBAL_HANDS.get_active_window()
+                if window and "WhatsApp" in window.window_text():
+                    window_found = True
+                    break
+                    
+            if not window_found:
+                return {"error": "Timeout: Browser did not open WhatsApp."}
+                
+            print(">> [COMMUNICATOR] Window active. Engaging Optical Nerve (Spatial Filter Active)...")
+            
+            first_word = message.split()[0].lower()
+            rendered = False
+            screen_height = pyautogui.size().height
+            
+            # Poll vision 8 times (allowing ~12 seconds for the DOM to load)
+            for _ in range(8):
+                time.sleep(1.5)
+                coords = GLOBAL_EYES.find_element(first_word)
+                
+                # --- v6.2 ARCHITECTURE: THE SPATIAL FILTER ---
+                # We ignore any text found in the top 30% of the screen (the URL address bar)
+                if coords and coords['y'] > (screen_height * 0.3):
+                    print(f">> [COMMUNICATOR] Visual confirmation: Text '{first_word}' detected in lower chat canvas (Y-axis: {coords['y']}).")
+                    rendered = True
+                    break
+                elif coords:
+                    print(f">> [COMMUNICATOR] Discarding false-positive in upper screen (URL bar) at Y-axis: {coords['y']}")
+                    
+            if not rendered:
+                print(">> [COMMUNICATOR WARNING] Optical verify failed. Applying 8-second fallback delay...")
+                time.sleep(8)
+            else:
+                # A micro-delay to ensure the send button event listener is fully bound to the DOM
+                time.sleep(1.5) 
             
             print(">> [COMMUNICATOR] Injecting 'Enter' key to send...")
             pyautogui.press('enter')
             
-            # Wait a moment for it to send, then close the tab
-            time.sleep(2)
+            # Wait 3 seconds for the network request to actually fire before closing the tab
+            time.sleep(3)
             pyautogui.hotkey('ctrl', 'w')
             
             return {"status": "success", "message": f"WhatsApp message sent to {clean_number}."}
