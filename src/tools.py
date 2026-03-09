@@ -299,6 +299,14 @@ class Toolbox:
             return {"error": f"Memory Recall Failed: {e}"}
         
     @staticmethod
+    def forget_memory(query):
+        """Actively deletes a trivial or incorrect fact from the vector database."""
+        try:
+            return GLOBAL_MEMORY.forget(query)
+        except Exception as e:
+            return {"error": f"Memory Deletion Failed: {e}"}
+            
+    @staticmethod
     def get_weather(location):
         """Fetches current weather for a specific location using a free public API."""
         try:

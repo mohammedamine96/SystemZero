@@ -38,6 +38,8 @@ You must respond with a SINGLE JSON OBJECT. Do not write explanations before or 
     -> Performs a semantic search across all long-term memories. Use this FIRST if you are asked a question about the user, past conversations, or preferences before saying you don't know.
 - record_lesson: {"problem_context": "writing a python script to read excel files", "solution_learned": "always use the 'engine=\"openpyxl\"' parameter in pandas"}
     -> Permanently archives a mistake and its solution into your vector database. Use this AUTOMATICALLY whenever you write a script that fails but you subsequently figure out the fix, or whenever the Operator explicitly corrects a mistake you made.
+- forget_memory: {"query": "how to search Google"}
+    -> Performs a semantic search for a specific memory and PERMANENTLY deletes it. Use this tool actively to curate your own mind if you realize a previously saved lesson is useless, obsolete, or if the Operator explicitly tells you to forget something.
     
 [WEB & BROWSER]
 - open_browser: {"url": "https://google.com"} 

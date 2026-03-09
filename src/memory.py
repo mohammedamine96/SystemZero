@@ -57,3 +57,28 @@ class SemanticMemory:
         # Combine the top results into a single context string
         context = "\n".join([f"- {doc}" for doc in documents])
         return {"status": "success", "retrieved_memories": context}
+    
+    def forget(self, query):
+        """Searches for the most semantically similar memory and permanently erases it."""
+        if not self.collection: return {"error": "Memory DB offline."}
+        
+        # 1. Find the single closest matching memory
+        results = self.collection.query(
+            query_texts=[query],
+            n_results=1
+        )
+        
+        ids = results.get('ids', [[]])[0]
+        documents = results.get('documents', [[]])[0]
+        
+        if not ids or not documents:
+            return {"error": f"No relevant memories found matching: '{query}'"}
+            
+        target_id = ids[0]
+        target_doc = documents[0]
+        
+        # 2. Excise the specific vector from the database
+        self.collection.delete(ids=[target_id])
+        print(f">> [HIPPOCAMPUS] Synaptic pathway severed. Memory erased: '{target_doc}'")
+        
+        return {"status": "success", "message": f"Permanently deleted memory: '{target_doc}'"}
