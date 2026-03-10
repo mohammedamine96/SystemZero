@@ -620,78 +620,92 @@ class Toolbox:
     
     @staticmethod
     def start_watcher(name, interval_minutes, code_script):
-        """Runs a Python script every X minutes. If it prints 'ALERT:', it speaks."""
-        try:
-            import os
-            import time
-            import subprocess
-            import sys
-            
-            # Setup a dedicated folder for watcher scripts
-            watchers_dir = os.path.join("workspace", "watchers")
-            os.makedirs(watchers_dir, exist_ok=True)
-            
-            script_path = os.path.join(watchers_dir, f"{name}.py")
-            with open(script_path, "w", encoding="utf-8") as f:
-                f.write(code_script)
-
-            # Stop the old watcher if it has the same name
-            if name in Toolbox.ACTIVE_WATCHERS:
-                Toolbox.ACTIVE_WATCHERS[name]["running"] = False 
-            
-            def watcher_loop():
-                print(f"\n>> [WATCHER] 👁️ '{name}' online (Checking every {interval_minutes}m).")
-                while Toolbox.ACTIVE_WATCHERS.get(name, {}).get("running", False):
-                    try:
-                        # Run the script the LLM wrote
-                        result = subprocess.run(
-                            [sys.executable, script_path], 
-                            capture_output=True, text=True, timeout=30
-                        )
-                        output = result.stdout.strip()
-                        
-                        # If the script triggers an alert, interrupt the user!
-                        if "ALERT:" in output:
-                            alert_msg = output.split("ALERT:")[1].strip().split("\n")[0]
-                            print(f"\n>> [WATCHER ALERT] '{name}': {alert_msg}")
-                            
-                            try:
-                                import winsound
-                                winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
-                            except: pass
-                            
-                            safe_msg = alert_msg.replace("'", "").replace('"', '')
-                            ps_command = f'powershell -Command "Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak(\'Watcher Alert: {safe_msg}\');"'
-                            os.system(ps_command)
-                            
-                    except Exception as e:
-                        print(f"\n>> [WATCHER ERROR] '{name}' failed: {e}")
-                    
-                    # Sleep until the next check
-                    time.sleep(float(interval_minutes) * 60)
-
-            # Register and start the background thread
-            Toolbox.ACTIVE_WATCHERS[name] = {"running": True}
-            t = threading.Thread(target=watcher_loop, daemon=True)
+        """Runs a Python script asynchronously every X minutes. If it prints 'ALERT:', it speaks."""
+        import os
+        import asyncio
+        import subprocess
+        import sys
+        import threading
+        
+        # --- v6.3 ASYNC ENGINE INITIALIZATION ---
+        # Spin up the single background event loop if it doesn't exist yet
+        if not hasattr(Toolbox, "_async_loop"):
+            print(">> [WATCHER ENGINE] Booting singular Async Event Loop...")
+            Toolbox._async_loop = asyncio.new_event_loop()
+            t = threading.Thread(target=Toolbox._async_loop.run_forever, daemon=True)
             t.start()
-            
-            return {"status": "success", "message": f"Watcher '{name}' started successfully."}
-        except Exception as e:
-            return {"error": f"Failed to start watcher: {e}"}
+            Toolbox.ACTIVE_WATCHERS = {}
+
+        # Setup a dedicated folder for watcher scripts
+        watchers_dir = os.path.join("workspace", "watchers")
+        os.makedirs(watchers_dir, exist_ok=True)
+        
+        script_path = os.path.join(watchers_dir, f"{name}.py")
+        with open(script_path, "w", encoding="utf-8") as f:
+            f.write(code_script)
+
+        # Cancel the old asynchronous task if replacing an existing watcher
+        if name in Toolbox.ACTIVE_WATCHERS and not Toolbox.ACTIVE_WATCHERS[name].done():
+            Toolbox.ACTIVE_WATCHERS[name].cancel()
+
+        # Define the cooperative asynchronous task
+        async def watcher_task():
+            print(f"\n>> [WATCHER] 👁️ '{name}' online (Async Polling every {interval_minutes}m).")
+            while True:
+                try:
+                    # Run the heavy subprocess in an executor so it doesn't block the async loop
+                    loop = asyncio.get_running_loop()
+                    result = await loop.run_in_executor(
+                        None, 
+                        lambda: subprocess.run([sys.executable, script_path], capture_output=True, text=True, timeout=30)
+                    )
+                    output = result.stdout.strip()
+                    
+                    if "ALERT:" in output:
+                        alert_msg = output.split("ALERT:")[1].strip().split("\n")[0]
+                        print(f"\n>> [WATCHER ALERT] '{name}': {alert_msg}")
+                        
+                        try:
+                            import winsound
+                            winsound.MessageBeep(winsound.MB_ICONEXCLAMATION)
+                        except: pass
+                        
+                        safe_msg = alert_msg.replace("'", "").replace('"', '')
+                        ps_command = f'powershell -Command "Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak(\'Watcher Alert: {safe_msg}\');"'
+                        os.system(ps_command)
+                        
+                except asyncio.CancelledError:
+                    print(f"\n>> [WATCHER ENGINE] Task '{name}' gracefully cancelled.")
+                    break
+                except Exception as e:
+                    print(f"\n>> [WATCHER ERROR] '{name}' failed: {e}")
+                
+                # The crucial fix: Cooperative yielding instead of blocking time.sleep()
+                await asyncio.sleep(float(interval_minutes) * 60)
+
+        # Schedule the coroutine safely in the background event loop
+        task = asyncio.run_coroutine_threadsafe(watcher_task(), Toolbox._async_loop)
+        Toolbox.ACTIVE_WATCHERS[name] = task
+        
+        return {"status": "success", "message": f"Async Watcher '{name}' successfully injected into the event loop."}
 
     @staticmethod
     def stop_watcher(name):
-        """Terminates a background watcher."""
-        if name in Toolbox.ACTIVE_WATCHERS:
-            Toolbox.ACTIVE_WATCHERS[name]["running"] = False
+        """Terminates an asynchronous background watcher."""
+        if hasattr(Toolbox, "ACTIVE_WATCHERS") and name in Toolbox.ACTIVE_WATCHERS:
+            # Send the cancellation signal to the async task
+            Toolbox.ACTIVE_WATCHERS[name].cancel()
             del Toolbox.ACTIVE_WATCHERS[name]
-            return {"status": "success", "message": f"Watcher '{name}' terminated."}
-        return {"error": f"Watcher '{name}' not found."}
+            return {"status": "success", "message": f"Async Watcher '{name}' terminated."}
+        return {"error": f"Watcher '{name}' not found in the event loop."}
 
     @staticmethod
     def list_watchers():
-        """Lists all active background tasks."""
-        active = [k for k, v in Toolbox.ACTIVE_WATCHERS.items() if v["running"]]
+        """Lists all active background asynchronous tasks."""
+        if not hasattr(Toolbox, "ACTIVE_WATCHERS"):
+            return {"status": "success", "active_watchers": []}
+            
+        active = [k for k, v in Toolbox.ACTIVE_WATCHERS.items() if not v.done()]
         return {"status": "success", "active_watchers": active}
     
     @staticmethod
